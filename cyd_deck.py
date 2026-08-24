@@ -9,20 +9,20 @@ import pyautogui
 CONFIG = {
     "buttons": [
         # Fila 1
-        {"id": 0, "label": "Pretty print", "color": "#1A1819", "icon": "/refresh.bmp", "action": "shift+f1"},
+        {"id": 0, "label": "Pretty print", "color": "#000000", "icon": "/refresh.bmp", "action": "shift+f1"},
         {"id": 1, "label": "Activar", "color": "#641271", "icon": "/activate.bmp", "action": "ctrl+f3"},
-        {"id": 2, "label": "Copy line", "color": "#1A1819", "icon": "/copy.bmp", "action": "ctrl+alt+down"},
-        {"id": 3, "label": "OBS", "color": "#1A1819", "icon": "", "action": "open:C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"},
+        {"id": 2, "label": "Copy line", "color": "#000000", "icon": "/copy.bmp", "action": "ctrl+alt+down"},
+        {"id": 3, "label": "OBS", "color": "#000000", "icon": "", "action": "open:C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"},
         # Fila 2
-        {"id": 4, "label": "Copiar", "color": "#1A1819", "icon": "", "action": "ctrl+c"},
-        {"id": 5, "label": "Pegar", "color": "#1A1819", "icon": "", "action": "ctrl+v"},
-        {"id": 6, "label": "Vol -", "color": "#1A1819", "icon": "/volume_down.bmp", "action": "volumedown"},
-        {"id": 7, "label": "Vol +", "color": "#1A1819", "icon": "/volume_up.bmp", "action": "volumeup"},
+        {"id": 4, "label": "Copiar", "color": "#000000", "icon": "", "action": "ctrl+c"},
+        {"id": 5, "label": "Pegar", "color": "#000000", "icon": "", "action": "ctrl+v"},
+        {"id": 6, "label": "Vol -", "color": "#000000", "icon": "/volume_down.bmp", "action": "volumedown"},
+        {"id": 7, "label": "Vol +", "color": "#000000", "icon": "/volume_up.bmp", "action": "volumeup"},
         # Fila 3
-        {"id": 8, "label": "Mute Mic", "color": "#1A1819", "icon": "/mute.bmp", "action": "ctrl+shift+m"},
-        {"id": 9, "label": "Play/Pause", "color": "#1A1819", "icon": "/pause.bmp", "action": "playpause"},
-        {"id": 10, "label": "Siguiente", "color": "#1A1819", "icon": "/fast-backward.bmp", "action": "nexttrack"},
-        {"id": 11, "label": "Anterior", "color": "#1A1819", "icon": "/fast-forward-button.bmp", "action": "prevtrack"}
+        {"id": 8, "label": "Mute Mic", "color": "#000000", "icon": "/mute.bmp", "action": "ctrl+shift+m"},
+        {"id": 9, "label": "Play/Pause", "color": "#000000", "icon": "/pause.bmp", "action": "playpause"},
+        {"id": 10, "label": "Siguiente", "color": "#000000", "icon": "/fast-backward.bmp", "action": "nexttrack"},
+        {"id": 11, "label": "Anterior", "color": "#000000", "icon": "/fast-forward-button.bmp", "action": "prevtrack"}
     ]
 }
 
