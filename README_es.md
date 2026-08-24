@@ -24,6 +24,8 @@
 
 Este proyecto convierte la placa ESP32-2432S028 (conocida como CYD - Cheap Yellow Display) en un controlador macro programable similar a un Stream Deck, comunicándose con Windows vía USB/Serial.
 
+![Main screen](main.png)
+
 ### Características
 - 12 botones programables (grid 4x3)
 - Pantalla táctil a color 2.8" (320x240)
