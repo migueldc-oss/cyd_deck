@@ -1,6 +1,6 @@
 # CYD Command Deck - Documentación Completa
 
-**Transforma tu ESP32-Cheap-Yellow-Display en un Command Deck funcional like Stream Deck**
+**Transforma tu ESP32-Cheap-Yellow-Display en un Command Deck funcional como Stream Deck**
 
 ---
 
