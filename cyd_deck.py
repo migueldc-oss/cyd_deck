@@ -9,20 +9,20 @@ import pyautogui
 CONFIG = {
     "buttons": [
         # Fila 1
-        {"id": 0, "label": "Mute Mic", "color": "#641271", "icon": "/bmp.bmp", "action": "ctrl+shift+m"},
-        {"id": 1, "label": "Cam On/Off", "color": "#00FF00", "icon": "/bmp.bmp", "action": "ctrl+shift+v"},
-        {"id": 2, "label": "OBS", "color": "#0000FF", "icon": "/bmp.bmp", "action": "open:obs64.exe"},
-        {"id": 3, "label": "Navegador", "color": "#FFFF00", "icon": "/bmp.bmp", "action": "open:chrome.exe"},
+        {"id": 0, "label": "Pretty printer", "color": "#1A1819", "icon": "/refresh.bmp", "action": "shift+f1"},
+        {"id": 1, "label": "Activar", "color": "#641271", "icon": "/activate.bmp", "action": "ctrl+f3"},
+        {"id": 2, "label": "Copy", "color": "#1A1819", "icon": "/copy.bmp", "action": "ctrl+alt+down"},
+        {"id": 3, "label": "Chrome", "color": "#1A1819", "icon": "", "action": "open:chrome.exe"},
         # Fila 2
-        {"id": 4, "label": "Copiar", "color": "#808080", "icon": "/bmp.bmp", "action": "ctrl+c"},
-        {"id": 5, "label": "Pegar", "color": "#808080", "icon": "/bmp.bmp", "action": "ctrl+v"},
-        {"id": 6, "label": "Vol -", "color": "#A52A2A", "icon": "/bmp.bmp", "action": "volumedown"},
-        {"id": 7, "label": "Vol +", "color": "#A52A2A", "icon": "/bmp.bmp", "action": "volumeup"},
+        {"id": 4, "label": "Copiar", "color": "#1A1819", "icon": "", "action": "ctrl+c"},
+        {"id": 5, "label": "Pegar", "color": "#1A1819", "icon": "", "action": "ctrl+v"},
+        {"id": 6, "label": "Vol -", "color": "#1A1819", "icon": "/volume_down.bmp", "action": "volumedown"},
+        {"id": 7, "label": "Vol +", "color": "#1A1819", "icon": "/volume_up.bmp", "action": "volumeup"},
         # Fila 3
-        {"id": 8, "label": "Mute Vol", "color": "#A52A2A", "icon": "/bmp.bmp", "action": "volumemute"},
-        {"id": 9, "label": "Play/Pause", "color": "#4B0082", "icon": "/bmp.bmp", "action": "playpause"},
-        {"id": 10, "label": "Siguiente", "color": "#4B0082", "icon": "/bmp.bmp", "action": "nexttrack"},
-        {"id": 11, "label": "Anterior", "color": "#4B0082", "icon": "/bmp.bmp", "action": "prevtrack"}
+        {"id": 8, "label": "Mute Mic", "color": "#1A1819", "icon": "/mute.bmp", "action": "volumemute"},
+        {"id": 9, "label": "Play/Pause", "color": "#1A1819", "icon": "/pause.bmp", "action": "playpause"},
+        {"id": 10, "label": "Siguiente", "color": "#1A1819", "icon": "/fast-backward.bmp", "action": "nexttrack"},
+        {"id": 11, "label": "Anterior", "color": "#1A1819", "icon": "/fast-forward-button.bmp", "action": "prevtrack"}
     ]
 }
 
