@@ -1,53 +1,53 @@
-# CYD Command Deck - Documentación Completa
+# CYD Command Deck - Complete Documentation
 
-**Transforma tu ESP32-Cheap-Yellow-Display en un Command Deck funcional like Stream Deck**
-
----
-
-## Índice
-
-1. Descripción del Proyecto
-2. Arquitectura del Sistema
-3. Requisitos
-4. Instalación y Configuración
-5. Guía de Uso
-6. Referencia de Comandos
-7. Creación de Iconos
-8. Documentación Técnica
-9. Configuración de User_Setup.h
-10. Solución de Problemas
-11. Personalización Avanzada
+**Transform your ESP32-Cheap-Yellow-Display into a functional Command Deck like Stream Deck**
 
 ---
 
-## Descripción del Proyecto
+## Table of Contents
 
-Este proyecto convierte la placa ESP32-2432S028 (conocida como CYD - Cheap Yellow Display) en un controlador macro programable similar a un Stream Deck, comunicándose con Windows vía USB/Serial.
-
-### Características
-- 12 botones programables (grid 4x3)
-- Pantalla táctil a color 2.8" (320x240)
-- Iconos personalizables desde la tarjeta SD
-- Configuración dinámica sin reprogramar el ESP32
-- Ejecución de macros, atajos de teclado y apertura de aplicaciones
-- Comunicación bidireccional vía JSON sobre puerto serie
-- Gestión inteligente del bus SPI (SD y táctil no comparten SPI simultáneamente)
+1. Project Description
+2. System Architecture
+3. Requirements
+4. Installation and Configuration
+5. User Guide
+6. Command Reference
+7. Icon Creation
+8. Technical Documentation
+9. User_Setup.h Configuration
+10. Troubleshooting
+11. Advanced Customization
 
 ---
 
-## Arquitectura del Sistema
+## Project Description
+
+This project converts the ESP32-2432S028 board (known as CYD - Cheap Yellow Display) into a programmable macro controller similar to an Elgato Stream Deck, communicating with Windows via USB/Serial.
+
+### Features
+- 12 programmable buttons (4x3 grid)
+- 2.8" color touch screen (320x240)
+- Customizable icons from SD card
+- Dynamic configuration without reprogramming the ESP32
+- Macro execution, keyboard shortcuts, and application launching
+- Bidirectional communication via JSON over serial port
+- Smart SPI bus management (SD and touch don't share SPI simultaneously)
+
+---
+
+## System Architecture
 
     +-----------------------------------------------------------------+
     |                         CYD (ESP32)                             |
     |                                                                 |
     |  +--------------+    +----------------+    +--------------+     |
-    |  |   Pantalla   |    |  Controlador   |    |  MicroSD     |     |
-    |  |   ST7789     |<-->|     SPI        |<-->|  (iconos)    |     |
+    |  |   Display    |    |  Controller    |    |  MicroSD     |     |
+    |  |   ST7789     |<-->|     SPI        |<-->|  (icons)     |     |
     |  |  320x240     |    |  (HSPI)        |    |              |     |
     |  +--------------+    +-------+--------+    +--------------+     |
     |                              |                                  |
     |  +--------------+    +-------v--------+                         |
-    |  |   Táctil     |    |  Controlador   |                         |
+    |  |   Touch      |    |  Controller    |                         |
     |  |  XPT2046     |<-->|     SPI        |                         |
     |  |              |    |  (VSPI)        |                         |
     |  +--------------+    +----------------+                         |
@@ -61,115 +61,115 @@ Este proyecto convierte la placa ESP32-2432S028 (conocida como CYD - Cheap Yello
                         |                     |
                         |  +---------------+  |
                         |  |  pyautogui    |  |
-                        |  |  (teclas)     |  |
+                        |  |  (keys)       |  |
                         |  +---------------+  |
                         +---------------------+
 
-### Consideración Importante: Gestión del Bus SPI
+### Important Consideration: SPI Bus Management
 
-La CYD tiene una peculiaridad hardware: la pantalla, el táctil y la SD comparten el mismo bus SPI. Esto significa que no pueden funcionar simultáneamente.
+The CYD has a hardware peculiarity: the display, touch, and SD share the same SPI bus. This means they cannot operate simultaneously.
 
-Solución implementada:
-1. Pantalla: Usa el bus HSPI (pines dedicados)
-2. SD y Táctil: Se alternan en el bus VSPI
-3. Flujo inteligente:
-   - Al recibir configuración -> se inicializa la SD -> se leen iconos -> se cierra la SD (SD.end())
-   - Después se inicializa el táctil en un segundo bus SPI (VSPI)
-   - El táctil queda activo para detectar pulsaciones
+Implemented solution:
+1. Display: Uses HSPI bus (dedicated pins)
+2. SD and Touch: Alternate on VSPI bus
+3. Smart flow:
+   - When receiving configuration -> initialize SD -> read icons -> close SD (SD.end())
+   - Then initialize touch on a second SPI bus (VSPI)
+   - Touch remains active to detect presses
 
 ---
 
-## Requisitos
+## Requirements
 
 ### Hardware
-- Placa ESP32-2432S028 (CYD)
-- Tarjeta MicroSD formateada en FAT32 (recomendada)
-- Cable USB-C o Micro-USB (dependiendo de tu placa)
-- PC con Windows
+- ESP32-2432S028 board (CYD)
+- MicroSD card formatted in FAT32 (recommended)
+- USB-C or Micro-USB cable (depending on your board)
+- PC with Windows
 
 ### Software
-- Arduino IDE o PlatformIO
-- Python 3.7+ en Windows
-- Librerías de Arduino:
+- Arduino IDE or PlatformIO
+- Python 3.7+ on Windows
+- Arduino libraries:
   - TFT_eSPI
   - XPT2046_Touchscreen
-  - ArduinoJson (v6 o v7)
-- Paquetes de Python:
+  - ArduinoJson (v6 or v7)
+- Python packages:
     pip install pyserial pyautogui
 
 ---
 
-## Instalación y Configuración
+## Installation and Configuration
 
-### Paso 1: Configurar TFT_eSPI para CYD
+### Step 1: Configure TFT_eSPI for CYD
 
-Importante: Sin esto, la pantalla no funcionará.
+Important: Without this, the display won't work.
 
-1. Ve a: C:\Users\[TU_USUARIO]\Documents\Arduino\libraries\TFT_eSPI\
-2. Abre User_Setup.h y reemplaza TODO su contenido con el archivo proporcionado en la sección "Configuración de User_Setup.h"
-3. Guarda el archivo y reinicia Arduino IDE
+1. Go to: C:\Users\[YOUR_USER]\Documents\Arduino\libraries\TFT_eSPI\
+2. Open User_Setup.h and replace ALL its content with the file provided in the "User_Setup.h Configuration" section
+3. Save the file and restart Arduino IDE
 
-### Paso 2: Preparar la Tarjeta SD
+### Step 2: Prepare the SD Card
 
-1. Formatea la tarjeta en FAT32 (tamaño de asignación: 4096 bytes)
-2. Crea una carpeta /icons/ en la raíz
-3. Copia tus iconos BMP (ver sección "Creación de Iconos")
+1. Format the card in FAT32 (allocation size: 4096 bytes)
+2. Create an /icons/ folder in the root
+3. Copy your BMP icons (see "Icon Creation" section)
 
-### Paso 3: Subir Firmware a la CYD
+### Step 3: Upload Firmware to CYD
 
-1. Abre Arduino IDE
-2. Instala las librerías requeridas desde el Gestor de Librerías
-3. Copia el código del firmware cyd_deck.ino (ver Documentación Técnica)
-4. Selecciona:
-   - Placa: ESP32 Dev Module
-   - Puerto: COMx (el que corresponda)
-5. Sube el sketch
+1. Open Arduino IDE
+2. Install required libraries from Library Manager
+3. Copy the firmware code cyd_deck.ino (see Technical Documentation)
+4. Select:
+   - Board: ESP32 Dev Module
+   - Port: COMx (whichever applies)
+5. Upload the sketch
 
-### Paso 4: Configurar Python en Windows
+### Step 4: Configure Python on Windows
 
-1. Instala Python desde https://python.org
-2. Abre CMD o PowerShell y ejecuta:
+1. Install Python from https://python.org
+2. Open CMD or PowerShell and run:
     pip install pyserial pyautogui
-3. Crea un archivo cyd_deck.py con el código del host (ver Documentación Técnica)
-4. Edita el puerto COM en la línea:
-    ser = serial.Serial('COM3', 115200, timeout=1)  # <- Cambia COM3 por tu puerto
-5. Ejecuta como Administrador (necesario para enviar teclas a algunas apps):
+3. Create a file cyd_deck.py with the host code (see Technical Documentation)
+4. Edit the COM port in the line:
+    ser = serial.Serial('COM3', 115200, timeout=1)  # <- Change COM3 to your port
+5. Run as Administrator (required to send keys to some apps):
     python cyd_deck.py
 
 ---
 
-## Guía de Uso
+## User Guide
 
-### Configuración de Botones
+### Button Configuration
 
-Edita el diccionario CONFIG en cyd_deck.py:
+Edit the CONFIG dictionary in cyd_deck.py:
 
     CONFIG = {
         "buttons": [
             {
-                "id": 0,                    # ID del botón (0-11)
-                "label": "Mute Mic",        # Texto en el botón
-                "color": "#FF0000",         # Color de fondo (hex)
-                "icon": "/icons/mute.bmp",  # Ruta del icono en SD (opcional)
-                "action": "ctrl+shift+m"    # Acción a ejecutar
+                "id": 0,                    # Button ID (0-11)
+                "label": "Mute Mic",        # Text on the button
+                "color": "#FF0000",         # Background color (hex)
+                "icon": "/icons/mute.bmp",  # Icon path on SD (optional)
+                "action": "ctrl+shift+m"    # Action to execute
             },
-            # ... más botones
+            # ... more buttons
         ]
     }
 
-### IDs de Botones
+### Button IDs
 
     +-----+-----+-----+-----+
-    |  0  |  1  |  2  |  3  |  <- Fila 0
+    |  0  |  1  |  2  |  3  |  <- Row 0
     +-----+-----+-----+-----+
-    |  4  |  5  |  6  |  7  |  <- Fila 1
+    |  4  |  5  |  6  |  7  |  <- Row 1
     +-----+-----+-----+-----+
-    |  8  |  9  | 10  | 11  |  <- Fila 2
+    |  8  |  9  | 10  | 11  |  <- Row 2
     +-----+-----+-----+-----+
 
-### Ejemplos Prácticos
+### Practical Examples
 
-#### Botón para OBS Studio
+#### Button for OBS Studio
     {
         "id": 2,
         "label": "OBS",
@@ -178,7 +178,7 @@ Edita el diccionario CONFIG en cyd_deck.py:
         "action": "open:obs64.exe"
     }
 
-#### Botón para silenciar micrófono (Zoom/Teams/Discord)
+#### Button to mute microphone (Zoom/Teams/Discord)
     {
         "id": 0,
         "label": "Mute",
@@ -187,7 +187,7 @@ Edita el diccionario CONFIG en cyd_deck.py:
         "action": "ctrl+shift+m"
     }
 
-#### Botón para control de volumen
+#### Button for volume control
     {
         "id": 6,
         "label": "Vol -",
@@ -196,7 +196,7 @@ Edita el diccionario CONFIG en cyd_deck.py:
         "action": "volumedown"
     }
 
-#### Botón para abrir navegador
+#### Button to open browser
     {
         "id": 3,
         "label": "Chrome",
@@ -207,33 +207,33 @@ Edita el diccionario CONFIG en cyd_deck.py:
 
 ---
 
-## Referencia de Comandos
+## Command Reference
 
-### Atajos de Teclado
+### Keyboard Shortcuts
 
-Usa el formato "tecla1+tecla2+tecla3":
+Use the format "key1+key2+key3":
 
-| Combinación              | Sintaxis                  | Uso común              |
+| Combination              | Syntax                    | Common use             |
 |--------------------------|---------------------------|------------------------|
-| Ctrl + C                 | "ctrl+c"                  | Copiar                 |
-| Ctrl + V                 | "ctrl+v"                  | Pegar                  |
-| Ctrl + Z                 | "ctrl+z"                  | Deshacer               |
-| Ctrl + Shift + M         | "ctrl+shift+m"            | Mute en Zoom/Teams     |
-| Ctrl + Shift + V         | "ctrl+shift+v"            | Activar cámara         |
-| Ctrl + Shift + T         | "ctrl+shift+t"            | Reabrir pestaña        |
-| Alt + F4                 | "alt+f4"                  | Cerrar ventana         |
-| Alt + Tab                | "alt+tab"                 | Cambiar ventana        |
-| Win + D                  | "win+d"                   | Mostrar escritorio     |
-| Win + E                  | "win+e"                   | Explorador de archivos |
-| Win + L                  | "win+l"                   | Bloquear PC            |
-| Win + R                  | "win+r"                   | Ejecutar               |
-| Shift + F1               | "shift+f1"                | Ayuda contextual       |
-| Ctrl + F5                | "ctrl+f5"                 | Refrescar (sin caché)  |
-| Ctrl + Shift + Esc       | "ctrl+shift+escape"       | Administrador tareas   |
+| Ctrl + C                 | "ctrl+c"                  | Copy                   |
+| Ctrl + V                 | "ctrl+v"                  | Paste                  |
+| Ctrl + Z                 | "ctrl+z"                  | Undo                   |
+| Ctrl + Shift + M         | "ctrl+shift+m"            | Mute in Zoom/Teams     |
+| Ctrl + Shift + V         | "ctrl+shift+v"            | Activate camera        |
+| Ctrl + Shift + T         | "ctrl+shift+t"            | Reopen tab             |
+| Alt + F4                 | "alt+f4"                  | Close window           |
+| Alt + Tab                | "alt+tab"                 | Switch window          |
+| Win + D                  | "win+d"                   | Show desktop           |
+| Win + E                  | "win+e"                   | File Explorer          |
+| Win + L                  | "win+l"                   | Lock PC                |
+| Win + R                  | "win+r"                   | Run dialog             |
+| Shift + F1               | "shift+f1"                | Context help           |
+| Ctrl + F5                | "ctrl+f5"                 | Refresh (no cache)     |
+| Ctrl + Shift + Esc       | "ctrl+shift+escape"       | Task Manager           |
 
-### Teclas de Función
+### Function Keys
 
-| Tecla | Sintaxis |
+| Key   | Syntax   |
 |-------|----------|
 | F1    | "f1"     |
 | F2    | "f2"     |
@@ -248,25 +248,25 @@ Usa el formato "tecla1+tecla2+tecla3":
 | F11   | "f11"    |
 | F12   | "f12"    |
 
-### Teclas Multimedia
+### Multimedia Keys
 
-| Acción           | Sintaxis       |
+| Action           | Syntax         |
 |------------------|----------------|
-| Bajar volumen    | "volumedown"   |
-| Subir volumen    | "volumeup"     |
-| Silenciar        | "volumemute"   |
+| Volume down      | "volumedown"   |
+| Volume up        | "volumeup"     |
+| Mute             | "volumemute"   |
 | Play/Pause       | "playpause"    |
-| Siguiente pista  | "nexttrack"    |
-| Anterior pista   | "prevtrack"    |
+| Next track       | "nexttrack"    |
+| Previous track   | "prevtrack"    |
 
-### Teclas Especiales
+### Special Keys
 
-| Tecla            | Sintaxis       |
+| Key              | Syntax         |
 |------------------|----------------|
 | Enter            | "enter"        |
 | Escape           | "escape"       |
 | Tab              | "tab"          |
-| Espacio          | "space"        |
+| Space            | "space"        |
 | Backspace        | "backspace"    |
 | Delete           | "delete"       |
 | Insert           | "insert"       |
@@ -274,119 +274,119 @@ Usa el formato "tecla1+tecla2+tecla3":
 | End              | "end"          |
 | Page Up          | "pageup"       |
 | Page Down        | "pagedown"     |
-| Flecha arriba    | "up"           |
-| Flecha abajo     | "down"         |
-| Flecha izquierda | "left"         |
-| Flecha derecha   | "right"        |
+| Arrow up         | "up"           |
+| Arrow down       | "down"         |
+| Arrow left       | "left"         |
+| Arrow right      | "right"        |
 
-### Abrir Aplicaciones
+### Open Applications
 
-Formato: "open:nombre_ejecutable.exe"
+Format: "open:executable_name.exe"
 
     "open:obs64.exe"           # OBS Studio
     "open:chrome.exe"          # Google Chrome
     "open:firefox.exe"         # Mozilla Firefox
-    "open:notepad.exe"         # Bloc de notas
-    "open:calc.exe"            # Calculadora
+    "open:notepad.exe"         # Notepad
+    "open:calc.exe"            # Calculator
     "open:mspaint.exe"         # Paint
-    "open:explorer.exe"        # Explorador de archivos
+    "open:explorer.exe"        # File Explorer
     "open:discord.exe"         # Discord
     "open:spotify.exe"         # Spotify
 
 ---
 
-## Creación de Iconos
+## Icon Creation
 
-### Especificaciones Técnicas
+### Technical Specifications
 
-Los iconos DEBEN cumplir estos requisitos:
+Icons MUST meet these requirements:
 
-1. Formato: BMP (Bitmap de Windows)
-2. Resolución: 64x64 píxeles exactos
-3. Profundidad de color: 24 bits (RGB, sin canal alpha)
-4. Compresión: Ninguna (sin comprimir)
-5. Tamaño máximo: ~12 KB por icono
+1. Format: BMP (Windows Bitmap)
+2. Resolution: Exactly 64x64 pixels
+3. Color depth: 24 bits (RGB, no alpha channel)
+4. Compression: None (uncompressed)
+5. Maximum size: ~12 KB per icon
 
-### Método 1: Usando Paint (Windows)
+### Method 1: Using Paint (Windows)
 
-1. Abre Paint
-2. Pega o dibuja tu imagen
-3. Ve a Archivo -> Cambiar tamaño
-4. Selecciona Píxeles y desmarca "Mantener proporción"
-5. Introduce 64 en Ancho y 64 en Alto
-6. Ve a Archivo -> Guardar como -> Imagen de mapa de bits de 24 bits
-7. Nombra el archivo (ej: mute.bmp)
+1. Open Paint
+2. Paste or draw your image
+3. Go to File -> Resize
+4. Select Pixels and uncheck "Maintain aspect ratio"
+5. Enter 64 in Width and 64 in Height
+6. Go to File -> Save as -> 24-bit Bitmap
+7. Name the file (e.g., mute.bmp)
 
-### Método 2: Usando GIMP (Gratis)
+### Method 2: Using GIMP (Free)
 
-1. Abre GIMP
-2. Abre tu imagen
-3. Imagen -> Escalar imagen
-4. Introduce 64x64 píxeles
-5. Archivo -> Exportar como
-6. Elige extensión .bmp
-7. En opciones de exportación:
-   - Especificar tipo de mapa de bits
-   - Selecciona: RGB (24-bit)
-   - No marques "Compresión RLE"
-8. Exportar
+1. Open GIMP
+2. Open your image
+3. Image -> Scale Image
+4. Enter 64x64 pixels
+5. File -> Export As
+6. Choose .bmp extension
+7. In export options:
+   - Specify bitmap type
+   - Select: RGB (24-bit)
+   - Don't check "RLE compression"
+8. Export
 
-### Método 3: Usando Python (Automático)
+### Method 3: Using Python (Automatic)
 
-Crea un script convertir_iconos.py:
+Create a script convert_icons.py:
 
     from PIL import Image
     import os
 
-    def convertir_a_bmp(archivo_entrada, archivo_salida):
-        """Convierte cualquier imagen a BMP 64x64 24-bit"""
-        img = Image.open(archivo_entrada)
+    def convert_to_bmp(input_file, output_file):
+        """Convert any image to 64x64 24-bit BMP"""
+        img = Image.open(input_file)
         img = img.resize((64, 64), Image.Resampling.LANCZOS)
-        # Convertir a RGB (eliminar canal alpha si existe)
+        # Convert to RGB (remove alpha channel if exists)
         if img.mode == 'RGBA':
-            # Crear fondo blanco
-            fondo = Image.new('RGB', (64, 64), (255, 255, 255))
-            fondo.paste(img, mask=img.split()[3])  # Usar alpha como máscara
-            img = fondo
+            # Create white background
+            background = Image.new('RGB', (64, 64), (255, 255, 255))
+            background.paste(img, mask=img.split()[3])  # Use alpha as mask
+            img = background
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
-        img.save(archivo_salida, 'BMP', format='BMP')
-        print(f"Convertido: {archivo_entrada} -> {archivo_salida}")
+        img.save(output_file, 'BMP', format='BMP')
+        print(f"Converted: {input_file} -> {output_file}")
 
-    # Convertir todos los PNG/JPG de una carpeta
-    carpeta_entrada = "iconos_originales"
-    carpeta_salida = "icons"
+    # Convert all PNG/JPG from a folder
+    input_folder = "original_icons"
+    output_folder = "icons"
 
-    os.makedirs(carpeta_salida, exist_ok=True)
+    os.makedirs(output_folder, exist_ok=True)
 
-    for archivo in os.listdir(carpeta_entrada):
-        if archivo.lower().endswith(('.png', '.jpg', '.jpeg')):
-            nombre_sin_ext = os.path.splitext(archivo)[0]
-            entrada = os.path.join(carpeta_entrada, archivo)
-            salida = os.path.join(carpeta_salida, f"{nombre_sin_ext}.bmp")
-            convertir_a_bmp(entrada, salida)
+    for file in os.listdir(input_folder):
+        if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            name_without_ext = os.path.splitext(file)[0]
+            input_path = os.path.join(input_folder, file)
+            output_path = os.path.join(output_folder, f"{name_without_ext}.bmp")
+            convert_to_bmp(input_path, output_path)
 
-Instalar Pillow: pip install Pillow
+Install Pillow: pip install Pillow
 
-### Consejos de Diseño
+### Design Tips
 
-1. Fondo transparente simulado: Como BMP 24-bit no soporta transparencia, usa el mismo color de fondo que el color del botón en el JSON.
+1. Simulated transparent background: Since 24-bit BMP doesn't support transparency, use the same background color as the button color in JSON.
 
-   Ejemplo: Si tu botón es rojo #FF0000, pinta el fondo del BMP de rojo puro.
+   Example: If your button is red #FF0000, paint the BMP background pure red.
 
-2. Contraste alto: Usa colores brillantes sobre fondos oscuros o viceversa para mejor visibilidad.
+2. High contrast: Use bright colors on dark backgrounds or vice versa for better visibility.
 
-3. Evita detalles finos: A 64x64 píxeles, los detalles pequeños se pierden. Usa iconos simples y reconocibles.
+3. Avoid fine details: At 64x64 pixels, small details are lost. Use simple and recognizable icons.
 
-4. Paleta de iconos recomendada:
-   - Material Design Icons (https://pictogrammers.com/library/mdi/) (gratuitos)
-   - FontAwesome (https://fontawesome.com/) (versión gratuita)
-   - Icons8 (https://icons8.com/) (gratuitos con atribución)
+4. Recommended icon palettes:
+   - Material Design Icons (https://pictogrammers.com/library/mdi/) (free)
+   - FontAwesome (https://fontawesome.com/) (free version)
+   - Icons8 (https://icons8.com/) (free with attribution)
 
-### Estructura de Carpetas en la SD
+### Folder Structure on SD
 
-    / (raíz de la SD)
+    / (SD root)
     +-- icons/
     |   +-- mute.bmp
     |   +-- camera.bmp
@@ -400,25 +400,25 @@ Instalar Pillow: pip install Pillow
     |   +-- play.bmp
     |   +-- next.bmp
     |   +-- prev.bmp
-    +-- config.json (opcional, para backup)
+    +-- config.json (optional, for backup)
 
 ---
 
-## Documentación Técnica
+## Technical Documentation
 
-### Firmware ESP32 (Arduino) - cyd_deck.ino
+### ESP32 Firmware (Arduino) - cyd_deck.ino
 
-#### Librerías Requeridas
+#### Required Libraries
 
-    #include <TFT_eSPI.h>           // Driver de pantalla
-    #include <XPT2046_Touchscreen.h> // Driver táctil
-    #include <ArduinoJson.h>         // Parser JSON
-    #include <SD.h>                  // Lectura de tarjeta SD
-    #include <SPI.h>                 // Comunicación SPI
+    #include <TFT_eSPI.h>           // Display driver
+    #include <XPT2046_Touchscreen.h> // Touch driver
+    #include <ArduinoJson.h>         // JSON parser
+    #include <SD.h>                  // SD card reading
+    #include <SPI.h>                 // SPI communication
 
-#### Definición de Pines
+#### Pin Definition
 
-    // Pines del táctil (segundo bus SPI - VSPI)
+    // Touch pins (second SPI bus - VSPI)
     #define XPT2046_IRQ  36
     #define XPT2046_MOSI 32
     #define XPT2046_MISO 39
@@ -427,17 +427,17 @@ Instalar Pillow: pip install Pillow
     #define TOUCH_CS     33
     #define TOUCH_IRQ    36
 
-    // Pin CS de la SD (comparte bus con la pantalla)
+    // SD CS pin (shares bus with display)
     #define SD_CS 5
 
-    // Configuración del grid
+    // Grid configuration
     #define COLS 4
     #define ROWS 3
     #define BTN_W 80
     #define BTN_H 80
     #define ICON_SIZE 64
 
-#### Código Completo del Firmware
+#### Complete Firmware Code
 
     #include <TFT_eSPI.h>
     #include <XPT2046_Touchscreen.h>
@@ -445,7 +445,7 @@ Instalar Pillow: pip install Pillow
     #include <SPI.h>
     #include <SD.h>
 
-    // --- PINES CYD ---
+    // --- CYD PINS ---
     #define XPT2046_IRQ 36
     #define XPT2046_MOSI 32
     #define XPT2046_MISO 39
@@ -455,7 +455,7 @@ Instalar Pillow: pip install Pillow
     #define TOUCH_IRQ 36
     #define SD_CS 5
 
-    // --- CONFIGURACIÓN DE PANTALLA Y GRID ---
+    // --- DISPLAY AND GRID CONFIGURATION ---
     #define COLS 4
     #define ROWS 3
     #define BTN_W 80
@@ -485,9 +485,9 @@ Instalar Pillow: pip install Pillow
       tft.setRotation(3);
       tft.fillScreen(TFT_BLACK);
 
-      // Inicializar botones por defecto
+      // Initialize default buttons
       for (int i = 0; i < COLS * ROWS; i++) {
-        buttons[i].label = "Vacio";
+        buttons[i].label = "Empty";
         buttons[i].iconPath = "";
         buttons[i].bgColor = TFT_DARKGREY;
         buttons[i].textColor = TFT_WHITE;
@@ -568,7 +568,7 @@ Instalar Pillow: pip install Pillow
         if (!SD.begin(SD_CS)) {
           Serial.println("{\"error\":\"sd_failed\"}");
         } else {
-          Serial.println("SD Card inicializada.");
+          Serial.println("SD Card initialized.");
         }
       }
       
@@ -613,7 +613,7 @@ Instalar Pillow: pip install Pillow
     void drawBmpFile(const char *filename, int16_t x, int16_t y, int16_t w, int16_t h) {
       File bmpFile = SD.open(filename);
       if (!bmpFile) {
-        Serial.print("No se encontro: "); Serial.println(filename);
+        Serial.print("Not found: "); Serial.println(filename);
         return;
       }
       
@@ -645,9 +645,9 @@ Instalar Pillow: pip install Pillow
       bmpFile.close();
     }
 
-### Host Windows (Python) - cyd_deck.py
+### Windows Host (Python) - cyd_deck.py
 
-#### Código Completo del Host
+#### Complete Host Code
 
     import serial
     import json
@@ -673,7 +673,7 @@ Instalar Pillow: pip install Pillow
     }
 
     def connect_serial():
-        ser = serial.Serial('COM3', 115200, timeout=1)  # <- Cambia COM3
+        ser = serial.Serial('COM3', 115200, timeout=1)  # <- Change COM3
         time.sleep(2)
         return ser
 
@@ -682,7 +682,7 @@ Instalar Pillow: pip install Pillow
             if action_str.startswith("open:"):
                 app = action_str.replace("open:", "")
                 subprocess.Popen(app)
-                print(f"[OK] Abierto: {app}")
+                print(f"[OK] Opened: {app}")
             elif action_str in ["volumedown", "volumeup", "volumemute", 
                                 "playpause", "nexttrack", "prevtrack"]:
                 pyautogui.press(action_str)
@@ -690,31 +690,31 @@ Instalar Pillow: pip install Pillow
             else:
                 keys = action_str.split('+')
                 pyautogui.hotkey(*keys)
-                print(f"[OK] Teclas: {action_str}")
+                print(f"[OK] Keys: {action_str}")
         except Exception as e:
             print(f"[ERROR] {action_str}: {e}")
 
     def main():
-        print("Iniciando CYD Stream Deck...")
+        print("Starting CYD Stream Deck...")
         ser = connect_serial()
         
         while True:
             line = ser.readline().decode('utf-8').strip()
             if '"ready"' in line:
-                print("CYD conectada")
+                print("CYD connected")
                 break
         
         config_json = json.dumps(CONFIG) + '\n'
         ser.write(config_json.encode('utf-8'))
-        print("Configuracion enviada")
+        print("Configuration sent")
         
         while True:
             line = ser.readline().decode('utf-8').strip()
             if '"updated"' in line:
-                print("Configuracion cargada en CYD")
+                print("Configuration loaded on CYD")
                 break
         
-        print("Escuchando pulsaciones...")
+        print("Listening for presses...")
         while True:
             try:
                 line = ser.readline().decode('utf-8').strip()
@@ -730,28 +730,28 @@ Instalar Pillow: pip install Pillow
                         if action:
                             execute_action(action)
                         else:
-                            print(f"[WARN] Sin accion para boton {btn_id}")
+                            print(f"[WARN] No action for button {btn_id}")
             except json.JSONDecodeError as e:
                 print(f"[JSON ERROR] {e}")
             except KeyboardInterrupt:
-                print("\nCerrando...")
+                print("\nClosing...")
                 ser.close()
                 break
 
     if __name__ == "__main__":
         main()
 
-### Protocolo de Comunicación
+### Communication Protocol
 
-#### Mensajes CYD -> PC
+#### CYD -> PC Messages
 
-    {"status":"ready"}                    // CYD inicializada
-    {"status":"updated"}                  // Configuracion aplicada
-    {"type":"press","id":5}               // Boton 5 presionado
-    {"error":"sd_failed"}                 // Error: SD no detectada
-    {"error":"json_parse"}                // Error: JSON invalido
+    {"status":"ready"}                    // CYD initialized
+    {"status":"updated"}                  // Configuration applied
+    {"type":"press","id":5}               // Button 5 pressed
+    {"error":"sd_failed"}                 // Error: SD not detected
+    {"error":"json_parse"}                // Error: Invalid JSON
 
-#### Mensajes PC -> CYD
+#### PC -> CYD Messages
 
     {
       "buttons": [
@@ -764,11 +764,11 @@ Instalar Pillow: pip install Pillow
       ]
     }
 
-### Calibración del Táctil
+### Touch Calibration
 
-Si los toques no se registran en la posición correcta:
+If touches are not registered in the correct position:
 
-    // Valores típicos para CYD (pueden variar)
+    // Typical values for CYD (may vary)
     #define X_MIN 200
     #define X_MAX 3800
     #define Y_MIN 250
@@ -781,9 +781,9 @@ Si los toques no se registran en la posición correcta:
 
 ---
 
-## Configuración de User_Setup.h
+## User_Setup.h Configuration
 
-Archivo completo para la CYD (ESP32-2432S028). Copia este contenido y reemplaza el archivo User_Setup.h en tu librería TFT_eSPI:
+Complete file for CYD (ESP32-2432S028). Copy this content and replace the User_Setup.h file in your TFT_eSPI library:
 
     // USER DEFINED SETTINGS
     // Set driver type, fonts to be loaded, pins used and SPI control method etc
@@ -835,99 +835,99 @@ Archivo completo para la CYD (ESP32-2432S028). Copia este contenido y reemplaza 
     #define SPI_TOUCH_FREQUENCY 2500000
     #define USE_HSPI_PORT
 
-Pines configurados para CYD:
+Pins configured for CYD:
 - TFT_MISO: 12
 - TFT_MOSI: 13
 - TFT_SCLK: 14
 - TFT_CS: 15
 - TFT_DC: 2
-- TFT_RST: -1 (conectado al RST del ESP32)
+- TFT_RST: -1 (connected to ESP32 RST)
 - TFT_BL: 21 (Backlight)
 - Driver: ST7789
-- Orden de colores: BGR
-- Frecuencia SPI: 55 MHz
-- Bus SPI: HSPI (para liberar VSPI para el táctil)
+- Color order: BGR
+- SPI frequency: 55 MHz
+- SPI bus: HSPI (to free VSPI for touch)
 
 ---
 
-## Solución de Problemas
+## Troubleshooting
 
-### Problema: Pantalla en blanco
+### Problem: Blank display
 
-Causa: User_Setup.h mal configurado
+Cause: User_Setup.h misconfigured
 
-Solución:
-1. Verifica que hayas reemplazado User_Setup.h con la configuración para CYD
-2. Reinicia Arduino IDE completamente
-3. Vuelve a compilar y subir
+Solution:
+1. Verify you replaced User_Setup.h with the CYD configuration
+2. Restart Arduino IDE completely
+3. Recompile and upload
 
-### Problema: Táctil no responde
+### Problem: Touch not responding
 
-Causa: Calibración incorrecta o conflicto SPI
+Cause: Incorrect calibration or SPI conflict
 
-Solución:
-1. Verifica que el código use el segundo bus SPI para el táctil:
+Solution:
+1. Verify the code uses the second SPI bus for touch:
     SPIClass touchscreenSpi = SPIClass(VSPI);
     touchscreenSpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     ts.begin(touchscreenSpi);
-2. Asegúrate de que SD.end() se llama antes de inicializar el táctil
-3. Ajusta los valores X_MIN, X_MAX, Y_MIN, Y_MAX según tu placa
+2. Make sure SD.end() is called before initializing touch
+3. Adjust X_MIN, X_MAX, Y_MIN, Y_MAX values according to your board
 
-### Problema: Iconos no se muestran
+### Problem: Icons not showing
 
-Causa: BMP en formato incorrecto o SD no inicializada
+Cause: Incorrect BMP format or SD not initialized
 
-Solución:
-1. Verifica que los BMP sean 24-bit sin compresión
-2. Verifica que sean exactamente 64x64 píxeles
-3. Verifica que la ruta en el JSON coincida con la SD (ej: /icons/mute.bmp)
-4. Formatea la SD en FAT32 (no exFAT ni NTFS)
-5. Revisa el Serial Monitor para ver si aparece "SD Card inicializada."
+Solution:
+1. Verify BMPs are 24-bit uncompressed
+2. Verify they are exactly 64x64 pixels
+3. Verify the path in JSON matches the SD (e.g., /icons/mute.bmp)
+4. Format SD in FAT32 (not exFAT or NTFS)
+5. Check Serial Monitor to see if "SD Card initialized." appears
 
-### Problema: Python no ejecuta acciones
+### Problem: Python not executing actions
 
-Causa: Permisos insuficientes o puerto COM incorrecto
+Cause: Insufficient permissions or incorrect COM port
 
-Solución:
-1. Ejecuta Python como Administrador
-2. Verifica el puerto COM en el Administrador de Dispositivos
-3. Asegúrate de que la ventana destino tenga el foco
+Solution:
+1. Run Python as Administrator
+2. Verify COM port in Device Manager
+3. Make sure the destination window has focus
 
-### Problema: "Guru Meditation Error"
+### Problem: "Guru Meditation Error"
 
-Causa: Memoria insuficiente o conflicto de librerías
+Cause: Insufficient memory or library conflict
 
-Solución:
-1. Reduce el tamaño de DynamicJsonDocument si es muy grande
-2. Actualiza todas las librerías a la última versión
-3. Reinicia la placa
+Solution:
+1. Reduce DynamicJsonDocument size if too large
+2. Update all libraries to latest version
+3. Restart the board
 
-### Problema: Conflicto entre SD y Táctil
+### Problem: Conflict between SD and Touch
 
-Causa: Ambos dispositivos intentan usar el mismo bus SPI simultáneamente
+Cause: Both devices trying to use the same SPI bus simultaneously
 
-Solución:
-1. Usa la implementación actual que alterna entre SD y táctil
-2. Asegúrate de llamar SD.end() antes de inicializar el táctil
-3. Usa un segundo bus SPI (VSPI) para el táctil con pines dedicados
+Solution:
+1. Use current implementation that alternates between SD and touch
+2. Make sure to call SD.end() before initializing touch
+3. Use a second SPI bus (VSPI) for touch with dedicated pins
 
 ---
 
-## Personalización Avanzada
+## Advanced Customization
 
-### Cambiar Tamaño de Grid
+### Change Grid Size
 
-Para usar 3x4 (12 botones) en lugar de 4x3:
+To use 3x4 (12 buttons) instead of 4x3:
 
-    // En el firmware
+    // In firmware
     #define COLS 3
     #define ROWS 4
     #define BTN_W 106  // 320/3
     #define BTN_H 60   // 240/4
 
-### Añadir Sonido al Tocar
+### Add Sound on Touch
 
-Conecta un buzzer al pin 25 y añade:
+Connect a buzzer to pin 25 and add:
 
     #define BUZZER_PIN 25
 
@@ -941,31 +941,31 @@ Conecta un buzzer al pin 25 y añade:
       }
     }
 
-### Configurar Múltiples Perfiles
+### Configure Multiple Profiles
 
-Crea un sistema de perfiles en Python:
+Create a profile system in Python:
 
-    PERFILES = {
+    PROFILES = {
         "streaming": {
             "buttons": [
                 {"id": 0, "label": "OBS", "action": "open:obs64.exe"},
             ]
         },
-        "oficina": {
+        "office": {
             "buttons": [
                 {"id": 0, "label": "Teams", "action": "open:teams.exe"},
             ]
         }
     }
 
-    def cambiar_perfil(nombre):
+    def change_profile(name):
         global CONFIG
-        CONFIG = PERFILES[nombre]
-        enviar_configuracion_a_cyd(CONFIG)
+        CONFIG = PROFILES[name]
+        send_configuration_to_cyd(CONFIG)
 
-### Añadir Retroalimentación LED
+### Add LED Feedback
 
-La CYD tiene un LED RGB en los pines 4, 16, 17:
+CYD has an RGB LED on pins 4, 16, 17:
 
     #define LED_R 4
     #define LED_G 16
@@ -980,20 +980,20 @@ La CYD tiene un LED RGB en los pines 4, 16, 17:
       digitalWrite(LED_B, HIGH);
     }
 
-    void parpadear_led() {
+    void blink_led() {
       digitalWrite(LED_G, LOW);
       delay(100);
       digitalWrite(LED_G, HIGH);
     }
 
-### Sincronización con Apps
+### App Synchronization
 
-Usa WebSocket o HTTP para integrar con OBS, Streamlabs, etc.:
+Use WebSocket or HTTP to integrate with OBS, Streamlabs, etc.:
 
     import obswebsocket
     from obswebsocket import obsws, requests
 
-    ws = obsws("localhost", 4444, "tu_password")
+    ws = obsws("localhost", 4444, "your_password")
     ws.connect()
 
     def execute_action(action_str):
@@ -1004,9 +1004,9 @@ Usa WebSocket o HTTP para integrar con OBS, Streamlabs, etc.:
 
 ---
 
-## Créditos y Recursos
+## Credits and Resources
 
-### Proyectos Relacionados
+### Related Projects
 - ESP32-Cheap-Yellow-Display: https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display
 - TFT_eSPI: https://github.com/Bodmer/TFT_eSPI
 - pyautogui: https://pyautogui.readthedocs.io/
