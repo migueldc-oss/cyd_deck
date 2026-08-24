@@ -9,7 +9,7 @@ import pyautogui
 CONFIG = {
     "buttons": [
         # Fila 1
-        {"id": 0, "label": "Pretty printer", "color": "#1A1819", "icon": "/refresh.bmp", "action": "shift+f1"},
+        {"id": 0, "label": "Pretty print", "color": "#1A1819", "icon": "/refresh.bmp", "action": "shift+f1"},
         {"id": 1, "label": "Activar", "color": "#641271", "icon": "/activate.bmp", "action": "ctrl+f3"},
         {"id": 2, "label": "Copy", "color": "#1A1819", "icon": "/copy.bmp", "action": "ctrl+alt+down"},
         {"id": 3, "label": "Chrome", "color": "#1A1819", "icon": "", "action": "open:chrome.exe"},
@@ -59,11 +59,11 @@ def main():
     ser = connect_serial()
     
     # Esperar a que la CYD diga que está lista
-    while True:
-        line = ser.readline().decode('utf-8').strip()
-        if '"ready"' in line:
-            print("CYD conectada y lista. Enviando configuración...")
-            break
+    #while True:
+    #    line = ser.readline().decode('utf-8').strip()
+    #    if '"ready"' in line:
+    #        print("CYD conectada y lista. Enviando configuración...")
+    #        break
 
     # Enviar configuración a la CYD
     config_json = json.dumps(CONFIG) + '\n'
