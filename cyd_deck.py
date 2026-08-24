@@ -19,7 +19,7 @@ CONFIG = {
         {"id": 6, "label": "Vol -", "color": "#000000", "icon": "/volume_down.bmp", "action": "volumedown"},
         {"id": 7, "label": "Vol +", "color": "#000000", "icon": "/volume_up.bmp", "action": "volumeup"},
         # Fila 3
-        {"id": 8, "label": "Mute Mic", "color": "#000000", "icon": "/mute.bmp", "action": "ctrl+shift+m"},
+        {"id": 8, "label": "Mute Mic", "color": "#000000", "icon": "/mute.bmp", "action": "win+alt+k"},
         {"id": 9, "label": "Play/Pause", "color": "#000000", "icon": "/pause.bmp", "action": "playpause"},
         {"id": 10, "label": "Siguiente", "color": "#000000", "icon": "/fast-backward.bmp", "action": "nexttrack"},
         {"id": 11, "label": "Anterior", "color": "#000000", "icon": "/fast-forward-button.bmp", "action": "prevtrack"}
