@@ -20,6 +20,7 @@
 #define BTN_W 80
 #define BTN_H 80
 #define ICON_SIZE 64 // Tamaño de los iconos en píxeles
+#define TFT_BL 21
 
 TFT_eSPI tft = TFT_eSPI();
 SPIClass touchscreenSpi = SPIClass(VSPI);
@@ -78,6 +79,8 @@ void setup() {
   touchscreenSpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS); // Start second SPI bus for touchscreen 
   ts.begin(touchscreenSpi);    // Touchscreen init 
   ts.setRotation(3);  */
+
+  analogWrite(TFT_BL, 120);   // 0 = apagado ... 255 = máximo
 
   Serial.println("{\"status\":\"ready\"}");
   
