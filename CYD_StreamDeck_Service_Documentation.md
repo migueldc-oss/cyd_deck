@@ -5,41 +5,43 @@
 
 ## Table of Contents
 
-1. Overview
-2. Functional Documentation
-   2.1 Purpose
-   2.2 Feature Summary
-   2.3 Startup Behavior and Command-Line Arguments
-   2.4 System Tray (Service Mode)
-   2.5 Configuration Window
-   2.6 Button Configuration Fields
-   2.7 Action Syntax Reference
-   2.8 Icon Management
-   2.9 Configuration File (config.json)
-3. Technical Documentation
-   3.1 Architecture and Threading Model
-   3.2 Environment Detection and File Layout
-   3.3 Dependencies
-   3.4 Main Class: CYDStreamDeckApp
-   3.5 Button Configuration Frame: ButtonConfigFrame
-   3.6 Serial Communication Protocol
-   3.7 Action Execution Engine
-   3.8 Logging
-4. Installation, Build and Deployment
-   4.1 Requirements
-   4.2 Running from Source
-   4.3 Building the .exe
-   4.4 Auto-start with Windows
-5. Troubleshooting
-6. Appendix: Division of Responsibilities (PC vs CYD)
+- [1. Overview](#1-overview)
+- [2. Functional Documentation](#2-functional-documentation)
+  - [2.1 Purpose](#21-purpose)
+  - [2.2 Feature Summary](#22-feature-summary)
+  - [2.3 Startup Behavior and Command-Line Arguments](#23-startup-behavior-and-command-line-arguments)
+  - [2.4 System Tray (Service Mode)](#24-system-tray-service-mode)
+  - [2.5 Configuration Window](#25-configuration-window)
+  - [2.6 Button Configuration Fields](#26-button-configuration-fields)
+  - [2.7 Profile Management](#27-profile-management)
+  - [2.8 Action Syntax Reference](#28-action-syntax-reference)
+  - [2.9 Icon Management](#29-icon-management)
+  - [2.10 Configuration Files](#210-configuration-files)
+- [3. Technical Documentation](#3-technical-documentation)
+  - [3.1 Architecture and Threading Model](#31-architecture-and-threading-model)
+  - [3.2 Environment Detection and File Layout](#32-environment-detection-and-file-layout)
+  - [3.3 Dependencies](#33-dependencies)
+  - [3.4 Main Class: CYDStreamDeckApp](#34-main-class-cydstreamdeckapp)
+  - [3.5 Button Configuration Frame: ButtonConfigFrame](#35-button-configuration-frame-buttonconfigframe)
+  - [3.6 Serial Communication Protocol](#36-serial-communication-protocol)
+  - [3.7 Action Execution Engine](#37-action-execution-engine)
+  - [3.8 Profile Switching System](#38-profile-switching-system)
+  - [3.9 Logging](#39-logging)
+- [4. Installation, Build and Deployment](#4-installation-build-and-deployment)
+  - [4.1 Requirements](#41-requirements)
+  - [4.2 Running from Source](#42-running-from-source)
+  - [4.3 Building the .exe](#43-building-the-exe)
+  - [4.4 Auto-start with Windows](#44-auto-start-with-windows)
+- [5. Troubleshooting](#5-troubleshooting)
+- [6. Appendix: Division of Responsibilities (PC vs CYD)](#6-appendix-division-of-responsibilities-pc-vs-cyd)
+
+
 
 ---
 
 ## 1. Overview
 
-cyd_deck_service.py is a single-file Windows application that turns an
-ESP32-2432S028 "CYD" (Cheap Yellow Display) board into a programmable
-macro pad / Stream Deck clone.
+cyd_deck_service.py is a single-file Windows application that turns an ESP32-2432S028 "CYD" (Cheap Yellow Display) board into a programmable macro pad / Stream Deck clone.
 
 The application combines three roles in one program:
 
@@ -49,13 +51,13 @@ The application combines three roles in one program:
                  (keyboard shortcuts, multimedia keys, launching apps).
   2. GUI       - A resizable configuration window (CustomTkinter) used to
                  edit the 12 buttons: name, background color, icon path
-                 (on the CYD SD card) and action.
+                 (on the CYD SD card), action, and manage multiple profiles.
   3. TRAY      - A system-tray icon that keeps the service alive when the
                  window is closed and gives access to the main commands.
 
-The CYD firmware (cyd_deck_service.ino) is responsible for rendering the buttons
+The CYD firmware (cyd_deck.ino) is responsible for rendering the buttons
 and detecting touches; the service application is responsible for
-configuration, persistence and OS-level action execution.
+configuration, persistence, profile management and OS-level action execution.
 
 ---
 
@@ -68,6 +70,8 @@ Provide a persistent, user-friendly host application that:
   to the CYD over USB/Serial.
 - Reacts to touch events from the CYD by executing Windows actions.
 - Allows reconfiguration at any time without reflashing the ESP32.
+- Supports multiple configuration profiles that can be switched
+  dynamically from the GUI or from the CYD itself.
 
 ### 2.2 Feature Summary
 
@@ -77,7 +81,11 @@ Provide a persistent, user-friendly host application that:
 - Live visual preview of each button (color + icon + label).
 - Icon preview reads the BMP directly from the SD card when it is
   mounted in Windows (via the "SD drive" field).
-- Persistent configuration stored in config.json.
+- Multiple profile support: Create, load and switch between different
+  configuration files (*.json).
+- Profile switching from CYD: Special action "profile:filename.json"
+  that allows the CYD to trigger a profile change.
+- Persistent configuration stored in config.json (default) or custom files.
 - System-tray resident service (starts hidden by default).
 - Resizable configuration window.
 - Automatic COM port detection.
@@ -85,7 +93,7 @@ Provide a persistent, user-friendly host application that:
 - Hotkey, multimedia and application-launch action engine.
 - Working-directory-aware application launching (fixes OBS
   "Failed to find locale/en-US.ini" and similar issues).
-- Timestamped log file (cyd_deck_service.log).
+- Timestamped log file (cyd_deck.log).
 
 ### 2.3 Startup Behavior and Command-Line Arguments
 
@@ -109,17 +117,12 @@ The tray icon exposes the following menu:
 
   Configure buttons   Shows/raises the configuration window
                       (also the default double-click action).
-  Reconnect CYD       Reloads config.json, reconnects the serial port
-                      and re-sends the configuration to the device.
-  Reload config       Re-reads config.json and refreshes the GUI fields
-                      without touching the serial connection.
   -----------------   Separator
   Exit                Stops the tray icon, closes the serial port and
                       terminates the application.
 
 While running, the service automatically:
 - Connects to the configured COM port at startup.
-- Waits for the CYD "ready" handshake.
 - Pushes the button configuration.
 - Listens forever for touch events and executes actions.
 
@@ -134,12 +137,16 @@ The window is resizable (minimum size 800x550). Layout, top to bottom:
        - SD drive entry (Windows drive letter where the CYD SD card is
          mounted, e.g. "E:"). Used only for icon preview and browsing.
        - Connection status label (green "Connected" / red "Disconnected").
-  3. Button grid: 4 columns x 3 rows of ButtonConfigFrame widgets,
+  3. Profile selector bar:
+       - Profile combo (lists all *.json files in the application folder).
+       - "Load" button (loads the selected profile).
+       - "New" button (creates a new profile file).
+  4. Button grid: 4 columns x 3 rows of ButtonConfigFrame widgets,
      all expanding with the window.
-  4. Action bar:
+  5. Action bar:
        - Refresh previews   Re-reads icon files from the SD drive.
-       - Save               Writes config.json.
-       - Save and Send      Writes config.json and pushes the
+       - Save               Writes the current profile to disk.
+       - Save and Send      Writes the profile and pushes the
                             configuration to the CYD immediately.
        - Minimize to tray   Hides the window (service keeps running).
 
@@ -151,8 +158,10 @@ and four rows of fields:
   Row 0: [ID]  Name      Text shown on the CYD button.
   Row 1:       Color     Color-picker button + hex label. Sets the
                          button background color on the CYD.
-  Row 2:       Action    Free-text action (see 2.7). Executed on
+  Row 2:       Action    Free-text action (see 2.8). Executed on
                          Windows when the button is pressed.
+                         Can also be "profile:filename.json" to switch
+                         to another configuration profile.
   Row 3:       Icon      EDITABLE TEXT field with the icon path as the
                          CYD firmware expects it, e.g. /icons/mute.bmp
                          The BMP file lives on the CYD SD card; the PC
@@ -164,9 +173,44 @@ and four rows of fields:
 The preview updates live when the name or color change, and the icon
 preview is loaded from <SD drive>/<icon path> when available.
 
-### 2.7 Action Syntax Reference
+### 2.7 Profile Management
 
-The Action field accepts three kinds of values:
+What is a profile?
+A profile is a complete button configuration stored in a separate JSON file.
+You can create multiple profiles for different scenarios (streaming, office,
+gaming, etc.) and switch between them instantly.
+
+Creating a new profile:
+1. Click the "New" button in the profile selector bar.
+2. Choose a filename (e.g., "streaming.json", "office.json").
+3. A new profile is created with default empty buttons.
+4. Configure the buttons as needed and click "Save".
+
+Loading a profile:
+1. Select a profile from the dropdown combo (shows all *.json files).
+2. Click "Load" to load it into the configuration window.
+3. The window updates to show the buttons from that profile.
+
+Switching profiles from the CYD:
+You can configure a button to switch to another profile by using the
+special action syntax:
+
+  profile:streaming.json
+
+When this button is pressed on the CYD:
+1. The service receives the action.
+2. It loads the specified profile file.
+3. It updates the GUI to reflect the new profile.
+4. It automatically sends the new configuration to the CYD.
+5. The CYD display updates with the new button layout.
+
+Profile file location:
+All profile files (*.json) are stored in the same folder as the
+application executable (or script). The default profile is "config.json".
+
+### 2.8 Action Syntax Reference
+
+The Action field accepts four kinds of values:
 
   a) Keyboard shortcuts: keys joined with "+"
        ctrl+shift+m        Mute mic in Zoom/Teams/Discord
@@ -198,10 +242,22 @@ The Action field accepts three kinds of values:
      service automatically sets cwd to the executable's folder when a
      full path is given.
 
-### 2.8 Icon Management
+  d) Profile switch: "profile:" prefix
+       profile:streaming.json          Loads and activates the
+                                       "streaming.json" profile.
+       profile:office.json             Switches to office configuration.
+       profile:gaming.json             Switches to gaming configuration.
+
+     When a profile action is triggered:
+     - The service loads the specified JSON file.
+     - Updates the GUI to show the new configuration.
+     - Automatically sends the new button layout to the CYD.
+     - The CYD display refreshes with the new buttons.
+
+### 2.9 Icon Management
 
 - Icons are stored ON THE CYD SD CARD, typically in /icons/.
-- The PC application only stores the path string in config.json.
+- The PC application only stores the path string in the profile JSON.
 - The user copies BMP files to the SD card manually (with Windows
   Explorer) while the card is mounted.
 - Recommended icon format (enforced by the CYD firmware parser):
@@ -209,28 +265,22 @@ The Action field accepts three kinds of values:
 - If the "SD drive" field is set (e.g. E:), the GUI can preview icons
   and the browse helper can auto-fill paths.
 
-### 2.9 Configuration File (config.json)
+### 2.10 Configuration Files
 
-Stored next to the executable/script. Schema:
+Default profile:
+  config.json - The default configuration file loaded at startup.
 
-{
-  "port": "COM3",
-  "baudrate": 115200,
-  "sd_drive": "E:",
-  "buttons": [
-    {
-      "id": 0,
-      "label": "Mute",
-      "color": "#ff0000",
-      "icon": "/icons/mute.bmp",
-      "action": "ctrl+shift+m"
-    },
-    ... (12 entries, id 0..11)
-  ]
-}
+Custom profiles:
+  Any *.json file in the application folder is treated as a profile.
+  Examples:
+    - streaming.json
+    - office.json
+    - gaming.json
+    - presentation.json
 
-The file is created automatically with default values on first run if
-it does not exist.
+File discovery:
+The application automatically scans the application folder for all
+*.json files and lists them in the profile selector combo.
 
 ---
 
@@ -259,6 +309,8 @@ Cross-thread rules:
   work on the main thread via self.after(0, callable).
 - Actions (pyautogui / subprocess) run in their own daemon threads so
   the serial listener is never blocked.
+- Profile switching operations are marshalled to the main thread to
+  safely update the UI.
 
 ### 3.2 Environment Detection and File Layout
 
@@ -268,9 +320,10 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # source
 
 Files resolved relative to BASE_DIR:
-  config.json     persistent configuration
-  cyd_deck.log    append-only log
-  icon.ico        tray icon (auto-created with a default image if missing)
+  config.json          default persistent configuration
+  *.json               additional profile files
+  cyd_deck.log         append-only log
+  icon.ico             tray icon (auto-created with a default image if missing)
 
 This makes the .exe fully portable: it can be copied to any folder
 (including a USB stick) and keeps its configuration with it.
@@ -295,18 +348,36 @@ Key members and methods:
   load_config / save_config_to_file / get_default_config
     JSON persistence with fallback defaults (12 grey buttons).
 
+  get_json_files
+    Scans BASE_DIR for all *.json files and returns sorted list.
+
+  load_profile(filename)
+    Loads a specific profile file and updates the UI.
+
+  create_new_profile()
+    Opens a save dialog to create a new profile file with default config.
+
+  refresh_profile_list()
+    Updates the profile combo box with current *.json files.
+
   get_sd_drive
     Returns the configured SD drive letter for preview/browsing.
 
   setup_ui
-    Resizable grid layout: connection bar, 4x3 button grid with
-    uniform row/column weights, action bar.
+    Resizable grid layout: connection bar, profile selector, 4x3 button
+    grid with uniform row/column weights, action bar.
+
+  on_profile_changed / load_selected_profile
+    Handles profile selection and loading from the UI.
 
   serial_service / connect_cyd / send_config_to_cyd / listen_cyd
-    Serial lifecycle (see 3.6).
+    Serial lifecycle.
 
   execute_action
-    Action engine (see 3.7).
+    Action engine including profile switching.
+
+  switch_profile_from_cyd
+    Handles profile change requests coming from the CYD.
 
   collect_config
     Reads every ButtonConfigFrame plus connection fields into
@@ -324,7 +395,7 @@ Key members and methods:
     ser.close, destroy).
 
   reload_ui_from_config
-    Refreshes all widgets after "Reload configuration".
+    Refreshes all widgets after loading a profile.
 
 ### 3.5 Button Configuration Frame: ButtonConfigFrame
 
@@ -342,7 +413,7 @@ Behavior:
 - Browse button      -> opens a file dialog rooted at <SD drive>/icons
                         and writes the relative "/icons/name.bmp"
                         path into the icon entry.
-- get_data()         -> returns the button dict stored in config.json.
+- get_data()         -> returns the button dict stored in the profile.
 
 Icon full-path resolution for previews:
   rel  = icon.lstrip("/").replace("/", os.sep)
@@ -364,21 +435,14 @@ PC -> CYD:
   {"buttons":[ {"id":0,"label":"...","color":"#rrggbb",
                 "icon":"/icons/x.bmp","action":"..."}, ... ]}
 
-Handshake at startup / reconnect:
+Handshake at startup:
   1. PC opens COM port, waits ~2 s (ESP32 auto-reset).
-  2. PC waits up to 10 s for {"status":"ready"}.
-  3. PC sends the buttons payload.
-  4. PC waits up to 10 s for {"status":"updated"}.
+  2. PC sends the buttons payload.
+  3. PC waits up to 10 s for {"status":"updated"}.
 
 Runtime:
   The listener parses incoming lines; on "press" it looks up the
   button by id in the in-memory config and executes its action.
-
-Note on firmware constraints (context): the CYD alternates SD and
-touch on the shared SPI bus; the SD is released (SD.end()) after the
-first configuration is drawn, then the touchscreen is started on a
-second SPI bus (VSPI). The service is unaffected by this detail but
-explains why icons are only (re)loaded when a config is received.
 
 ### 3.7 Action Execution Engine
 
@@ -393,20 +457,61 @@ execute_action(action_str):
           # "Failed to find locale/en-US.ini".
       else:
           subprocess.Popen(path, shell=True)   # name resolved by OS
+
+  elif action starts with "profile:":
+      profile_name = extract filename
+      switch_profile_from_cyd(profile_name)
+      # Loads the profile, updates UI, sends to CYD
+
   elif action in multimedia list:
       pyautogui.press(action)
+
   else:
       pyautogui.hotkey(*[k.strip() for k in action.split('+')])
 
 Every execution is logged; exceptions are caught and logged, never
 crashing the service.
 
-### 3.8 Logging
+### 3.8 Profile Switching System
+
+From the GUI:
+  load_selected_profile():
+      selected = profile_combo.get()
+      if selected:
+          load_profile(selected)
+          # Updates UI
+          # Updates profile combo
+
+From the CYD:
+  switch_profile_from_cyd(profile_name):
+      filepath = os.path.join(BASE_DIR, profile_name)
+      if not os.path.exists(filepath):
+          log error
+          return
+      
+      current_config_file = filepath
+      config_data = load_config(filepath)
+      
+      # Update UI on main thread
+      after(0, reload_ui_from_config)
+      after(0, update profile_combo)
+      
+      # Send new config to CYD
+      if connected:
+          send_config_to_cyd()
+
+Key features:
+- Thread-safe UI updates via after(0, ...)
+- Automatic CYD reconfiguration
+- Profile combo stays in sync
+- Error handling for missing files
+
+### 3.9 Logging
 
 log(msg) writes "[YYYY-mm-dd HH:MM:SS] msg" to stdout and appends it
 to cyd_deck.log in BASE_DIR. Logged events include: startup paths,
 connection results, config sent/updated, received frames, executed
-actions and errors.
+actions, profile switches and errors.
 
 ---
 
@@ -430,9 +535,11 @@ actions and errors.
 
 Deploy folder (portable):
   CYD_StreamDeck.exe
-  config.json      (created on first run)
-  cyd_deck.log     (created on first run)
-  icon.ico         (created on first run if missing)
+  config.json          (created on first run, default profile)
+  streaming.json       (optional, custom profiles)
+  office.json          (optional, custom profiles)
+  cyd_deck.log         (created on first run)
+  icon.ico             (created on first run if missing)
 
 ### 4.4 Auto-start with Windows
 
@@ -459,7 +566,6 @@ Deploy folder (portable):
   Checks:  Correct COM port (Device Manager); no other program holding
            the port (close Arduino Serial Monitor); correct baudrate;
            CH340/CP2102 driver installed; cable is data-capable.
-           Then use tray -> "Reconnect CYD".
 
   Symptom: Keys are not received by some applications.
   Cause:   Target app runs with higher privileges (admin/elevated).
@@ -471,24 +577,32 @@ Deploy folder (portable):
            expects (/icons/name.bmp); file is a valid BMP.
            Use "Refresh previews" after changes.
 
-  Symptom: CYD does not redraw after saving.
-  Checks:  Service connected (green status); use "Save and Send";
-           check cyd_deck.log for "updated" or error frames.
+  Symptom: Profile switch from CYD doesn't work.
+  Checks:  Profile file exists in the application folder; filename in
+           action matches exactly (case-sensitive); check log for
+           "Cambiando perfil desde CYD" and any errors.
+
+  Symptom: Profile not found when loading.
+  Checks:  File must be in the same folder as the .exe/script; filename
+           must end with .json; check cyd_deck.log for load errors.
 
 ---
 
 ## 6. Appendix: Division of Responsibilities (PC vs CYD)
 
   PC service (cyd_deck_service.py):
-    - Owns the configuration (config.json) and the editing GUI.
-    - Owns OS action execution (keys, media, apps).
+    - Owns the configuration profiles (multiple *.json files).
+    - Owns the editing GUI and profile management.
+    - Owns OS action execution (keys, media, apps, profile switches).
     - Owns connection lifecycle and reconnection.
     - Never transfers image data; only icon PATH strings.
+    - Handles profile switching requests from the CYD.
 
   CYD firmware (cyd_deck.ino):
     - Renders the 4x3 grid (background color, BMP icon, label).
     - Reads BMP icons from its own SD card.
     - Debounces touches and emits {"type":"press","id":N}.
     - Manages the shared SPI bus (SD vs touchscreen).
+    - Can trigger profile changes by sending special actions.
 
 ---
