@@ -14,6 +14,16 @@
 #define TOUCH_IRQ 36
 #define SD_CS    5  // <--- NUEVO: Pin CS de la SD en la CYD
 
+//CS (Chip Select) / SS: GPIO 5
+//SCK (Clock): GPIO 18
+//MISO (Master In Slave Out): GPIO 19
+//MOSI (Master Out Slave In): GPIO 23
+#define _SCK = 18;
+#define _CS = 5; // Must be SCK+1 for HW CS support
+#define _MISO = 19;
+#define _MOSI = 23;
+
+
 // --- CONFIGURACIÓN DE PANTALLA Y GRID ---
 #define COLS 4
 #define ROWS 3
@@ -24,6 +34,7 @@
 
 TFT_eSPI tft = TFT_eSPI();
 SPIClass touchscreenSpi = SPIClass(VSPI);
+SPIClass sdSpi = SPIClass(VSPI);
 XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);
 //XPT2046_Touchscreen ts(TOUCH_CS);
 
@@ -38,7 +49,7 @@ struct Button {
 Button buttons[COLS * ROWS];
 unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 250;
-bool escucharSD = false; // Detenemos la escucha
+bool escucharTouch = false; // Detenemos la escucha
 
 void setup() {
   Serial.begin(115200);
@@ -92,7 +103,7 @@ void loop() {
     parseConfig(input);
   }
 
-  if (escucharSD == true){
+  if (escucharTouch == true){
     if (ts.touched()) {
       TS_Point p = ts.getPoint();
       int x = map(p.x, 200, 3800, 0, 320);
@@ -177,15 +188,19 @@ void parseConfig(String jsonStr) {
 //touchscreenSpi.close(); 
 //digitalWrite(TOUCH_CS, HIGH);
 
-  if (escucharSD == false){
+  touchscreenSpi.end();
+  escucharTouch = false;
+  delay(10);  // Pequeña pausa para estabilizar
+
+  //if (escucharTouch == false){
     // --- INICIALIZAR SD ---
-    if(!SD.begin(SD_CS)){
+    if(!SD.begin(SD_CS, sdSpi)){
       Serial.println("{\"error\":\"sd_failed\"}");
       // Puedes dibujar un mensaje de error en pantalla aquí si quieres
     } else {
       Serial.println("SD Card inicializada.");
     }
-  }
+  //}
 
 
   if (doc.containsKey("buttons")) {
@@ -209,14 +224,16 @@ void parseConfig(String jsonStr) {
     drawAllButtons();
     Serial.println("{\"status\":\"updated\"}");
     
-    if (escucharSD == false){    
+    //if (escucharTouch == false){    
       SD.end();
+      sdSpi.end();
+      delay(10);  // Pequeña pausa para estabilizar
         //Initialise the touchscreen
       touchscreenSpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS); // Start second SPI bus for touchscreen 
       ts.begin(touchscreenSpi);    // Touchscreen init 
       ts.setRotation(3);        
-      escucharSD = true;
-    }
+      escucharTouch = true;
+    //}
 
 /*
 
