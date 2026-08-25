@@ -22,7 +22,7 @@
 
 ## Project Description
 
-This project converts the ESP32-2432S028 board (known as CYD - Cheap Yellow Display) into a programmable macro controller similar to an Elgato Stream Deck, communicating with Windows via USB/Serial.
+This project converts the ESP32-2432S028 board (known as CYD - Cheap Yellow Display) into a programmable macro controller similar to an Stream Deck, communicating with Windows via USB/Serial.
 
 ![Main screen](main.png)
 
