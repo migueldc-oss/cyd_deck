@@ -405,6 +405,12 @@ class CYDStreamDeckApp(ctk.CTk):
         self.sd_entry.grid(row=0, column=6, padx=5)
         self.sd_entry.insert(0, self.config_data.get("sd_drive", ""))
 
+        #btn_reconnect = ctk.CTkButton(conn, text="🔄 Reconectar",
+        #                              command=self._on_reconnect_clicked, width=100,
+        #                              fg_color="#e67e22", hover_color="#d35400")
+        #btn_reconnect.grid(row=0, column=6, padx=(15, 5))
+        #btn_reconnect.pack(side="left", padx=5)
+
         self.lbl_status = ctk.CTkLabel(conn, text="● Desconectado", text_color="red",
                                        font=ctk.CTkFont(weight="bold"))
         self.lbl_status.grid(row=0, column=7, padx=10, sticky="e")
@@ -433,6 +439,11 @@ class CYDStreamDeckApp(ctk.CTk):
         
         btn_new = ctk.CTkButton(profile_frame, text="➕ Nuevo", command=self.create_new_profile, width=80)
         btn_new.pack(side="left", padx=5)
+
+        btn_reconnect = ctk.CTkButton(profile_frame, text="🔄 Reconectar",
+                                      command=self._on_reconnect_clicked, width=100,
+                                      fg_color="#e67e22", hover_color="#d35400")
+        btn_reconnect.pack(side="right", padx=5)
 
         # --- Grid de botones 4x3 ---
         grid_container = ctk.CTkFrame(self, fg_color="transparent")
@@ -478,6 +489,22 @@ class CYDStreamDeckApp(ctk.CTk):
                                           command=self.on_close_window, height=36,
                                           fg_color="#555555", hover_color="#333333")
         self.btn_minimize.grid(row=0, column=3, padx=8, sticky="ew")
+
+    def _on_reconnect_clicked(self):
+        """Callback del botón Reconectar: lanza la reconexión en un hilo"""
+        # Primero recoge los datos actuales de la UI (puerto, baudrate)
+        self.collect_config()
+        # Lanza la reconexión en un hilo para no bloquear la UI
+        threading.Thread(target=self._reconnect_worker, daemon=True).start()
+
+    def _reconnect_worker(self):
+        """Trabajo de reconexión en segundo plano"""
+        log("Reconectando manualmente...")
+        if self.connect_cyd():
+            # Si conecta, envía la configuración actual
+            self.send_config_to_cyd()
+        else:
+            log("No se pudo reconectar")
 
     def on_profile_changed(self, event):
         """Cuando el usuario selecciona un perfil del combobox"""
