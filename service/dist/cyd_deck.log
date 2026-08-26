@@ -1,0 +1,54 @@
+[2026-08-25 14:59:04] ✓ Conectado a COM3
+[2026-08-25 14:59:04] Configuración enviada (1219 bytes)
+[2026-08-25 14:59:05] ✓ CYD actualizada
+[2026-08-25 14:59:10] Configuración guardada
+[2026-08-25 14:59:10] Configuración enviada (1219 bytes)
+[2026-08-25 14:59:11] ✓ CYD actualizada
+[2026-08-25 14:59:18] Configuración guardada
+[2026-08-25 14:59:18] Configuración enviada (1219 bytes)
+[2026-08-25 14:59:19] ✓ CYD actualizada
+[2026-08-25 15:02:38] Aplicación cerrada
+[2026-08-25 15:03:24] ✓ Conectado a COM3
+[2026-08-25 15:03:24] Configuración enviada (1219 bytes)
+[2026-08-25 15:03:26] ✓ CYD actualizada
+[2026-08-25 15:03:31] Configuración guardada
+[2026-08-25 15:03:31] Configuración enviada (1219 bytes)
+[2026-08-25 15:19:13] Aplicación cerrada
+[2026-08-25 21:33:11] ✓ Conectado a COM3
+[2026-08-25 21:33:11] Configuración enviada (1230 bytes)
+[2026-08-25 21:33:13] Cambiando perfil desde CYD: teams.json
+[2026-08-25 21:33:13] Configuración enviada (1209 bytes)
+[2026-08-25 21:33:14] ✓ Perfil cambiado a: teams.json
+[2026-08-25 21:33:17] Cambiando perfil desde CYD: config.json
+[2026-08-25 21:33:17] Configuración enviada (1230 bytes)
+[2026-08-25 21:33:18] ✓ Perfil cambiado a: config.json
+[2026-08-25 21:33:19] Cambiando perfil desde CYD: teams.json
+[2026-08-25 21:33:19] Configuración enviada (1209 bytes)
+[2026-08-25 21:33:20] ✓ Perfil cambiado a: teams.json
+[2026-08-25 21:33:20] [OK] Teclas: ctrl+shift+s
+[2026-08-25 21:33:21] [OK] Teclas: ctrl+shift+s
+[2026-08-25 21:33:23] [OK] Teclas: ctrl+shift+h
+[2026-08-25 21:33:23] [OK] Teclas: ctrl+shift+h
+[2026-08-25 21:33:26] [OK] Teclas: win+alt+k
+[2026-08-25 21:33:28] [OK] Teclas: win+alt+k
+[2026-08-25 21:33:28] [OK] Teclas: win+alt+k
+[2026-08-25 21:33:30] [OK] Teclas: win+alt+k
+[2026-08-25 21:33:30] Cambiando perfil desde CYD: config.json
+[2026-08-25 21:33:31] Configuración enviada (1230 bytes)
+[2026-08-25 21:33:32] ✓ Perfil cambiado a: config.json
+[2026-08-25 21:33:35] Cambiando perfil desde CYD: teams.json
+[2026-08-25 21:33:36] Configuración enviada (1209 bytes)
+[2026-08-25 21:33:37] ✓ Perfil cambiado a: teams.json
+[2026-08-25 21:33:39] [OK] Teclas: ctrl+shift+h
+[2026-08-25 21:33:40] Cambiando perfil desde CYD: config.json
+[2026-08-25 21:33:41] Configuración enviada (1230 bytes)
+[2026-08-25 21:33:42] ✓ Perfil cambiado a: config.json
+[2026-08-25 21:34:28] [OK] Teclas: win+alt+k
+[2026-08-25 21:43:34] Cambiando perfil desde CYD: teams.json
+[2026-08-25 21:43:34] Configuración enviada (1209 bytes)
+[2026-08-25 21:43:35] ✓ Perfil cambiado a: teams.json
+[2026-08-25 21:43:38] Cambiando perfil desde CYD: config.json
+[2026-08-25 21:43:38] Configuración enviada (1230 bytes)
+[2026-08-25 21:43:39] ✓ Perfil cambiado a: config.json
+[2026-08-25 21:43:41] Desconectado: ClearCommError failed (PermissionError(13, 'Acceso denegado.', None, 5))
+[2026-08-26 08:13:58] Aplicación cerrada

@@ -11,6 +11,7 @@ import sys
 import customtkinter as ctk
 from tkinter import colorchooser, filedialog, messagebox
 import serial.tools.list_ports
+import glob
 
 # ============================================================
 # DETECCIÓN DE ENTORNO (funciona en .py y en .exe)
@@ -230,13 +231,14 @@ class CYDStreamDeckApp(ctk.CTk):
         self.connected = False
         self.running = True
         self.tray_icon = None
+        self.current_config_file = CONFIG_FILE  # Archivo de configuración actual
         self.config_data = self.load_config()
 
         # --- Configurar ventana ---
         self.title("CYD Stream Deck - Configuración")
         self.geometry("1000x720")
         self.minsize(800, 550)
-        self.resizable(True, True)  # <-- VENTANA REDIMENSIONABLE
+        self.resizable(True, True)  # Ventana redimensionable
         self.protocol("WM_DELETE_WINDOW", self.on_close_window)
 
         # --- UI ---
@@ -256,20 +258,27 @@ class CYDStreamDeckApp(ctk.CTk):
     # ========================================================
     # CONFIGURACIÓN (JSON)
     # ========================================================
-    def load_config(self):
-        if os.path.exists(CONFIG_FILE):
+    def load_config(self, filepath=None):
+        """Carga la configuración desde un archivo específico o el actual"""
+        if filepath is None:
+            filepath = self.current_config_file
+        
+        if os.path.exists(filepath):
             try:
-                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
                 log(f"Error cargando config: {e}")
         return self.get_default_config()
 
-    def save_config_to_file(self):
+    def save_config_to_file(self, filepath=None):
+        """Guarda la configuración en un archivo específico o el actual"""
+        if filepath is None:
+            filepath = self.current_config_file
         try:
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(self.config_data, f, indent=2, ensure_ascii=False)
-            log("Configuración guardada")
+            log(f"Configuración guardada en {filepath}")
             return True
         except Exception as e:
             log(f"Error guardando config: {e}")
@@ -290,6 +299,67 @@ class CYDStreamDeckApp(ctk.CTk):
     def get_sd_drive(self):
         """Devuelve la letra de unidad SD configurada"""
         return self.config_data.get("sd_drive", "").strip()
+
+    def get_json_files(self):
+        """Devuelve la lista de archivos JSON en BASE_DIR"""
+        pattern = os.path.join(BASE_DIR, "*.json")
+        files = glob.glob(pattern)
+        # Extraer solo los nombres de archivo
+        filenames = [os.path.basename(f) for f in files]
+        return sorted(filenames)
+
+    def load_profile(self, filename):
+        """Carga un perfil de configuración específico"""
+        filepath = os.path.join(BASE_DIR, filename)
+        if not os.path.exists(filepath):
+            messagebox.showerror("Error", f"El archivo {filename} no existe")
+            return False
+        
+        self.current_config_file = filepath
+        self.config_data = self.load_config(filepath)
+        
+        # Actualizar UI
+        self.after(0, self.reload_ui_from_config)
+        
+        # Actualizar selector de perfiles
+        if hasattr(self, 'profile_combo'):
+            self.profile_combo.set(filename)
+        
+        log(f"Perfil cargado: {filename}")
+        return True
+
+    def create_new_profile(self):
+        """Crea un nuevo perfil de configuración"""
+        name = filedialog.asksaveasfilename(
+            title="Crear nuevo perfil",
+            initialdir=BASE_DIR,
+            defaultextension=".json",
+            filetypes=[("Archivos JSON", "*.json")]
+        )
+        if name:
+            filename = os.path.basename(name)
+            # Crear archivo con configuración por defecto
+            default_config = self.get_default_config()
+            default_config["port"] = self.config_data.get("port", "COM3")
+            default_config["baudrate"] = self.config_data.get("baudrate", 115200)
+            default_config["sd_drive"] = self.config_data.get("sd_drive", "")
+            
+            try:
+                with open(name, 'w', encoding='utf-8') as f:
+                    json.dump(default_config, f, indent=2, ensure_ascii=False)
+                log(f"Nuevo perfil creado: {filename}")
+                # Recargar lista de perfiles
+                self.refresh_profile_list()
+                # Cargar el nuevo perfil
+                self.load_profile(filename)
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo crear el perfil: {e}")
+
+    def refresh_profile_list(self):
+        """Actualiza la lista de perfiles en el combobox"""
+        if hasattr(self, 'profile_combo'):
+            profiles = self.get_json_files()
+            self.profile_combo.configure(values=profiles)
 
     # ========================================================
     # INTERFAZ GRÁFICA
@@ -339,9 +409,34 @@ class CYDStreamDeckApp(ctk.CTk):
                                        font=ctk.CTkFont(weight="bold"))
         self.lbl_status.grid(row=0, column=7, padx=10, sticky="e")
 
+        # --- Selector de perfiles ---
+        profile_frame = ctk.CTkFrame(self)
+        profile_frame.grid(row=3, column=0, padx=20, pady=5, sticky="ew")
+        
+        ctk.CTkLabel(profile_frame, text="📁 Perfil:", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
+        
+        profiles = self.get_json_files()
+        self.profile_combo = ctk.CTkComboBox(profile_frame, values=profiles, width=200)
+        self.profile_combo.pack(side="left", padx=5)
+        
+        # Seleccionar el archivo actual
+        current_filename = os.path.basename(self.current_config_file)
+        if current_filename in profiles:
+            self.profile_combo.set(current_filename)
+        else:
+            self.profile_combo.set("config.json")
+        
+        self.profile_combo.bind("<<ComboboxSelected>>", self.on_profile_changed)
+        
+        btn_load = ctk.CTkButton(profile_frame, text="📂 Cargar", command=self.load_selected_profile, width=80)
+        btn_load.pack(side="left", padx=5)
+        
+        btn_new = ctk.CTkButton(profile_frame, text="➕ Nuevo", command=self.create_new_profile, width=80)
+        btn_new.pack(side="left", padx=5)
+
         # --- Grid de botones 4x3 ---
         grid_container = ctk.CTkFrame(self, fg_color="transparent")
-        grid_container.grid(row=3, column=0, padx=20, pady=10, sticky="nsew")
+        grid_container.grid(row=4, column=0, padx=20, pady=10, sticky="nsew")
         # Hacer que todas las columnas y filas del grid sean redimensionables
         for c in range(4):
             grid_container.grid_columnconfigure(c, weight=1, uniform="btn")
@@ -362,27 +457,38 @@ class CYDStreamDeckApp(ctk.CTk):
 
         # --- Botones de acción ---
         actions = ctk.CTkFrame(self)
-        actions.grid(row=4, column=0, padx=20, pady=(5, 15), sticky="ew")
+        actions.grid(row=5, column=0, padx=20, pady=(5, 15), sticky="ew")
         for c in range(4):
             actions.grid_columnconfigure(c, weight=1)
 
-        #self.btn_refresh_preview = ctk.CTkButton(actions, text="🔄 Actualizar vistas previas",
-        #                                         command=self.refresh_previews, height=36)
-        #self.btn_refresh_preview.grid(row=0, column=0, padx=8, sticky="ew")
+        self.btn_refresh_preview = ctk.CTkButton(actions, text=" Actualizar vistas previas",
+                                                 command=self.refresh_previews, height=36)
+        self.btn_refresh_preview.grid(row=0, column=0, padx=8, sticky="ew")
 
         self.btn_save = ctk.CTkButton(actions, text="💾 Guardar",
                                       command=self.save_config, height=36)
         self.btn_save.grid(row=0, column=1, padx=8, sticky="ew")
 
-        #self.btn_send = ctk.CTkButton(actions, text="📤 Guardar y Enviar a CYD",
-        #                              command=self.save_and_send, height=36,
-        #                              fg_color="green", hover_color="darkgreen")
-        #self.btn_send.grid(row=0, column=2, padx=8, sticky="ew")
+        self.btn_send = ctk.CTkButton(actions, text="📤 Guardar y Enviar a CYD",
+                                      command=self.save_and_send, height=36,
+                                      fg_color="green", hover_color="darkgreen")
+        self.btn_send.grid(row=0, column=2, padx=8, sticky="ew")
 
         self.btn_minimize = ctk.CTkButton(actions, text="🗕 Minimizar a bandeja",
                                           command=self.on_close_window, height=36,
                                           fg_color="#555555", hover_color="#333333")
         self.btn_minimize.grid(row=0, column=3, padx=8, sticky="ew")
+
+    def on_profile_changed(self, event):
+        """Cuando el usuario selecciona un perfil del combobox"""
+        pass  # Solo carga al hacer clic en "Cargar"
+
+    def load_selected_profile(self):
+        """Carga el perfil seleccionado en el combobox"""
+        selected = self.profile_combo.get()
+        if selected:
+            if self.load_profile(selected):
+                messagebox.showinfo("✓ Éxito", f"Perfil '{selected}' cargado correctamente")
 
     def refresh_previews(self):
         """Refresca todas las vistas previas de iconos"""
@@ -426,33 +532,24 @@ class CYDStreamDeckApp(ctk.CTk):
             log("No hay conexión con la CYD")
             return False
         try:
-            # Esperar "ready"
-            #timeout = time.time() + 10
-            #while time.time() < timeout and self.running:
-            #    if self.ser.in_waiting > 0:
-            #        line = self.ser.readline().decode('utf-8', errors='ignore').strip()
-            #        if '"ready"' in line:
-            #            log("CYD lista")
-            #            break
-            #    time.sleep(0.1)
-
             cyd_config = {"buttons": self.config_data.get("buttons", [])}
             payload = json.dumps(cyd_config) + '\n'
             self.ser.write(payload.encode('utf-8'))
             log(f"Configuración enviada ({len(payload)} bytes)")
 
             # Esperar confirmación
-            timeout = time.time() + 10
-            while time.time() < timeout and self.running:
-                if self.ser.in_waiting > 0:
-                    line = self.ser.readline().decode('utf-8', errors='ignore').strip()
-                    if '"updated"' in line:
-                        log("✓ CYD actualizada")
-                        return True
-                    elif '"error"' in line:
-                        log(f"✗ Error CYD: {line}")
-                        return False
-                time.sleep(0.1)
+            #timeout = time.time() + 10
+            #while time.time() < timeout and self.running:
+            #    if self.ser.in_waiting > 0:
+            #        line = self.ser.readline().decode('utf-8', errors='ignore').strip()
+            #        if '"updated"' in line:
+            #            log("✓ CYD actualizada")
+            #            return True
+            #        elif '"error"' in line:
+            #            log(f"✗ Error CYD: {line}")
+            #           return False
+            time.sleep(1.1)
+            return True
             return False
         except Exception as e:
             log(f"Error enviando config: {e}")
@@ -493,12 +590,17 @@ class CYDStreamDeckApp(ctk.CTk):
             if not action_str or not action_str.strip():
                 return
             action_str = action_str.strip()
+            
+            # NUEVO: Comando para cambiar de perfil desde la CYD
+            if action_str.startswith("profile:"):
+                profile_name = action_str.replace("profile:", "").strip()
+                self.switch_profile_from_cyd(profile_name)
+                return
+            
             if action_str.startswith("open:"):
                 app = action_str.replace("open:", "").strip()
-
                 # Normalizar separadores (admite / o \)
                 app_path = app.replace("/", os.sep)
-
                 if os.path.isfile(app_path):
                     # RUTA COMPLETA: ejecutar con su propia carpeta como cwd
                     # (esto soluciona el error "Failed to find locale/en-US.ini" de OBS)
@@ -507,8 +609,6 @@ class CYDStreamDeckApp(ctk.CTk):
                 else:
                     # Solo nombre: dejar que Windows lo resuelva
                     subprocess.Popen(app_path, shell=True)
-
-                #subprocess.Popen(app, shell=True)
                 log(f"[OK] Abierto: {app}")
             elif action_str in ["volumedown", "volumeup", "volumemute",
                                 "playpause", "nexttrack", "prevtrack"]:
@@ -520,6 +620,35 @@ class CYDStreamDeckApp(ctk.CTk):
                 log(f"[OK] Teclas: {action_str}")
         except Exception as e:
             log(f"[ERROR] {action_str}: {e}")
+
+    def switch_profile_from_cyd(self, profile_name):
+        """Cambia de perfil cuando la CYD envía el comando"""
+        log(f"Cambiando perfil desde CYD: {profile_name}")
+        
+        # Verificar que el archivo existe
+        filepath = os.path.join(BASE_DIR, profile_name)
+        if not os.path.exists(filepath):
+            log(f"Error: El perfil {profile_name} no existe")
+            return
+        
+        # Cargar el nuevo perfil
+        self.current_config_file = filepath
+        self.config_data = self.load_config(filepath)
+        
+        # Actualizar UI
+        self.after(0, self.reload_ui_from_config)
+
+        
+        # Actualizar selector de perfiles
+        if hasattr(self, 'profile_combo'):
+            self.after(0, lambda: self.profile_combo.set(profile_name))
+        
+        # Enviar la nueva configuración a la CYD
+        if self.connected:
+            time.sleep(0.1)  # Esperar a que la UI arranque
+            self.send_config_to_cyd()
+        
+        log(f"✓ Perfil cambiado a: {profile_name}")
 
     # ========================================================
     # GUARDAR / ENVIAR
@@ -534,7 +663,7 @@ class CYDStreamDeckApp(ctk.CTk):
     def save_config(self):
         self.collect_config()
         if self.save_config_to_file():
-            messagebox.showinfo("✓ Éxito", "Configuración guardada correctamente.")
+            messagebox.showinfo("✓ Éxito", f"Configuración guardada en:\n{os.path.basename(self.current_config_file)}")
             return True
         else:
             messagebox.showerror("✗ Error", "No se pudo guardar la configuración.")
@@ -551,6 +680,7 @@ class CYDStreamDeckApp(ctk.CTk):
                 "Usa 'Reconectar CYD' en el menú de la bandeja.")
             return
         threading.Thread(target=self.send_config_to_cyd, daemon=True).start()
+        #self.send_config_to_cyd()
         messagebox.showinfo("📤 Enviando",
             "Configuración enviada a la CYD.\nEspera unos segundos para que se aplique.")
 
@@ -564,15 +694,11 @@ class CYDStreamDeckApp(ctk.CTk):
             image = Image.open(ICON_FILE)
         except:
             image = Image.new('RGB', (64, 64), color=(50, 150, 250))
-
         menu = pystray.Menu(
             pystray.MenuItem("⚙ Configurar botones", self.tray_open_config, default=True),
-            #pystray.MenuItem("🔄 Reconectar CYD", self.tray_reconnect),
-            #pystray.MenuItem("📂 Recargar configuración", self.tray_reload),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("❌ Salir", self.tray_quit)
         )
-
         self.tray_icon = pystray.Icon("cyd_deck", image, "CYD Stream Deck", menu)
         self.tray_icon.run()
 
@@ -589,21 +715,6 @@ class CYDStreamDeckApp(ctk.CTk):
     # --- Callbacks del tray (se ejecutan en el hilo del icono) ---
     def tray_open_config(self, icon, item):
         self.after(0, self.show_window)
-
-    def tray_reconnect(self, icon, item):
-        threading.Thread(target=self._reconnect_worker, daemon=True).start()
-
-    def _reconnect_worker(self):
-        self.collect_config() if hasattr(self, 'port_combo') else None
-        # Recargar config del archivo por si cambió
-        self.config_data = self.load_config()
-        if self.connect_cyd():
-            self.send_config_to_cyd()
-
-    def tray_reload(self, icon, item):
-        self.config_data = self.load_config()
-        self.after(0, self.reload_ui_from_config)
-        log("Configuración recargada desde archivo")
 
     def tray_quit(self, icon, item):
         self.after(0, self.quit_app)

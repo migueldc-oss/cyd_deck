@@ -32,10 +32,10 @@
     },
     {
       "id": 4,
-      "label": "Copiar",
-      "color": "#000000",
+      "label": "Teams",
+      "color": "#8000ff",
       "icon": "",
-      "action": "ctrl+c"
+      "action": "profile:teams.json"
     },
     {
       "id": 5,
