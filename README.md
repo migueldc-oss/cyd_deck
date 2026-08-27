@@ -93,10 +93,10 @@ Implemented solution:
 
 ## 4. Installation and Configuration
 
-### Step 1: Configure TFT_eSPI for CYD
-Important: without this, the display will not work.
+### Step 1: Configure TFT_eSPI for your CYD
+Important: without this, the display will not work with ST7789. Check your model and configure it in User_Setup.h
 1. Go to: C:\Users\[YOUR_USER]\Documents\Arduino\libraries\TFT_eSPI\
-2. Open User_Setup.h and replace ALL its content with the configuration provided in section 8.3.
+2. Open User_Setup.h and replace ALL its content with the configuration provided in section 8.3 for ST7789 driver.
 3. Save the file and restart Arduino IDE.
 
 ### Step 2: Prepare the SD Card
