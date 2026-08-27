@@ -1,6 +1,7 @@
 # CYD Command Deck - Complete Documentation
 Transform your ESP32-Cheap-Yellow-Display into a functional Command Deck like Stream Deck
 
+![Main screen](main.png)
 ---
 
 ## Table of Contents
@@ -33,34 +34,34 @@ This project converts the ESP32-2432S028 board (known as CYD - Cheap Yellow Disp
 ---
 
 ## 2. System Architecture
-
-+-----------------------------------------------------------------+
-|                         CYD (ESP32)                             |
-|                                                                 |
-|  +--------------+    +----------------+    +--------------+     |
-|  |   Display    |    |  Controller    |    |  MicroSD     |     |
-|  |   ST7789     |<-->|     SPI        |<-->|  (icons)     |     |
-|  |  320x240     |    |  (HSPI)        |    |              |     |
-|  +--------------+    +-------+--------+    +--------------+     |
-|                              |                                  |
-|  +--------------+    +-------v--------+                         |
-|  |   Touch      |    |  Controller    |                         |
-|  |  XPT2046     |<-->|     SPI        |                         |
-|  |              |    |  (VSPI)        |                         |
-|  +--------------+    +----------------+                         |
-|                              |                                  |
-+------------------------------|----------------------------------+
-                               | USB/Serial (JSON)
-                               v
-                    +---------------------+
-                    |    Windows PC       |
-                    | cyd_deck_service.py |
-                    |                     |
-                    |  +---------------+  |
-                    |  |  pyautogui    |  |
-                    |  |  (keys/apps)  |  |
-                    |  +---------------+  |
-                    +---------------------+
+    
+    +-----------------------------------------------------------------+
+    |                         CYD (ESP32)                             |
+    |                                                                 |
+    |  +--------------+    +----------------+    +--------------+     |
+    |  |   Display    |    |  Controller    |    |  MicroSD     |     |
+    |  |   ST7789     |<-->|     SPI        |<-->|  (icons)     |     |
+    |  |  320x240     |    |  (HSPI)        |    |              |     |
+    |  +--------------+    +-------+--------+    +--------------+     |
+    |                              |                                  |
+    |  +--------------+    +-------v--------+                         |
+    |  |   Touch      |    |  Controller    |                         |
+    |  |  XPT2046     |<-->|     SPI        |                         |
+    |  |              |    |  (VSPI)        |                         |
+    |  +--------------+    +----------------+                         |
+    |                              |                                  |
+    +------------------------------|----------------------------------+
+                                   | USB/Serial (JSON)
+                                   v
+                        +---------------------+
+                        |    Windows PC       |
+                        | cyd_deck_service.py |
+                        |                     |
+                        |  +---------------+  |
+                        |  |  pyautogui    |  |
+                        |  |  (keys/apps)  |  |
+                        |  +---------------+  |
+                        +---------------------+
 
 ### Important Consideration: SPI Bus Management
 The CYD has a hardware peculiarity: the display, touch, and SD share the same SPI bus. This means they cannot operate simultaneously.
