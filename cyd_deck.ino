@@ -91,7 +91,7 @@ void setup() {
   ts.begin(touchscreenSpi);    // Touchscreen init 
   ts.setRotation(3);  */
 
-  analogWrite(TFT_BL, 120);   // 0 = apagado ... 255 = máximo
+  analogWrite(TFT_BL, 0);   // 0 = apagado ... 255 = máximo
 
   Serial.println("{\"status\":\"ready\"}");
   
@@ -233,6 +233,7 @@ void parseConfig(String jsonStr) {
       ts.begin(touchscreenSpi);    // Touchscreen init 
       ts.setRotation(3);        
       escucharTouch = true;
+      analogWrite(TFT_BL, 120);   // 0 = apagado ... 255 = máximo
     //}
 
 /*
