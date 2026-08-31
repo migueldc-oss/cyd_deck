@@ -254,6 +254,7 @@ The firmware handles display rendering, touch detection, and SD card reading.
 - SPI management: the display uses HSPI. The SD and Touch share VSPI. The firmware initializes the SD only when a configuration is received, reads the icons, calls SD.end(), and then initializes the Touchscreen on VSPI to prevent bus conflicts.
 - Communication: listens for JSON over Serial. Expects {"buttons":[...]} and replies with {"status":"updated"}. Emits {"type":"press","id":N} on touch.
 - Backlight: GPIO 21, brightness adjustable via analogWrite(TFT_BL, value) with 0-255.
+- Libraries: ArduinoJson.h, TFT_eSPI
 
 Key pin definition:
 
