@@ -1,5 +1,5 @@
 {
-  "port": "COM3",
+  "port": "COM5",
   "baudrate": 115200,
   "buttons": [
     {
@@ -39,24 +39,24 @@
     },
     {
       "id": 5,
-      "label": "Aceptar",
-      "color": "#008000",
+      "label": "Zoom +",
+      "color": "#000000",
       "icon": "",
-      "action": "ctrl+shift+s"
+      "action": "alt+shift+="
     },
     {
       "id": 6,
-      "label": "Rechazar",
-      "color": "#ff0000",
-      "icon": "",
-      "action": "ctrl+shift+d"
+      "label": "Vol -",
+      "color": "#000000",
+      "icon": "/volume_down.bmp",
+      "action": "volumedown"
     },
     {
       "id": 7,
-      "label": "Camara",
-      "color": "#804040",
-      "icon": "",
-      "action": "ctrl+shift+o"
+      "label": "Vol +",
+      "color": "#000000",
+      "icon": "/volume_up.bmp",
+      "action": "volumeup"
     },
     {
       "id": 8,
@@ -67,24 +67,24 @@
     },
     {
       "id": 9,
+      "label": "Zoom -",
+      "color": "#000000",
+      "icon": "",
+      "action": "alt+shift+-"
+    },
+    {
+      "id": 10,
+      "label": "Camara",
+      "color": "#800040",
+      "icon": "",
+      "action": "ctrl+shift+o"
+    },
+    {
+      "id": 11,
       "label": "Colgar",
       "color": "#ff0000",
       "icon": "",
       "action": "ctrl+shift+h"
-    },
-    {
-      "id": 10,
-      "label": "Anterior",
-      "color": "#000000",
-      "icon": "/fast-backward.bmp",
-      "action": "prevtrack"
-    },
-    {
-      "id": 11,
-      "label": "Siguiente",
-      "color": "#000000",
-      "icon": "/fast-forward-button.bmp",
-      "action": "nexttrack"
     }
   ],
   "sd_drive": ""

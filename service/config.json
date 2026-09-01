@@ -1,5 +1,5 @@
 {
-  "port": "COM3",
+  "port": "COM5",
   "baudrate": 115200,
   "buttons": [
     {
@@ -25,10 +25,10 @@
     },
     {
       "id": 3,
-      "label": "OBS",
+      "label": "Suspen",
       "color": "#000000",
       "icon": "",
-      "action": "open:C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
+      "action": "open:rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
     },
     {
       "id": 4,
@@ -39,10 +39,10 @@
     },
     {
       "id": 5,
-      "label": "Suspen",
+      "label": "OBS",
       "color": "#000000",
       "icon": "",
-      "action": "open:rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
+      "action": "open:C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
     },
     {
       "id": 6,
@@ -74,17 +74,17 @@
     },
     {
       "id": 10,
-      "label": "Anterior",
-      "color": "#000000",
-      "icon": "/fast-backward.bmp",
-      "action": "prevtrack"
+      "label": "Camara",
+      "color": "#800040",
+      "icon": "",
+      "action": "ctrl+shift+o"
     },
     {
       "id": 11,
-      "label": "Siguiente",
-      "color": "#000000",
-      "icon": "/fast-forward-button.bmp",
-      "action": "nexttrack"
+      "label": "Colgar",
+      "color": "#ff0000",
+      "icon": "",
+      "action": "ctrl+shift+h"
     }
   ],
   "sd_drive": ""
