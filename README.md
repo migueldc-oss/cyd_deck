@@ -197,6 +197,27 @@ volumedown, volumeup, volumemute, playpause, nexttrack, prevtrack
 
 ### d) Profile Switching ("profile:" prefix)
 - profile:streaming.json -> loads the specified JSON profile, updates the GUI, and pushes the new layout to the CYD.
+### e) Activate Window + Shortcut ("active:" prefix)
+
+Activates a window by process name, waits a specified time, then sends a keyboard shortcut. Useful for shortcuts that only work when the target application is in the foreground.
+
+**Syntax:** `active:<process_name>;<wait_ms>;<shortcut>`
+
+| Syntax                              | Example use                           |
+|-------------------------------------|---------------------------------------|
+| active:teams.exe;300;ctrl+shift+h   | Focus Teams, wait 300ms, toggle hand raise |
+| active:chrome.exe;200;ctrl+t        | Focus Chrome, wait 200ms, new tab     |
+| active:notepad.exe;500;ctrl+s       | Focus Notepad, wait 500ms, save       |
+
+- **process_name**: Exact process name as shown in Task Manager (e.g., `teams.exe`, `chrome.exe`, `Code.exe`).
+- **wait_ms**: Milliseconds to wait after activating the window before sending the shortcut.
+- **shortcut**: Standard keyboard shortcut (same format as section a).
+
+**Behavior:**
+- Searches for a visible window belonging to the specified process.
+- If found: restores (if minimized), brings to foreground, waits, then sends shortcut.
+- If **not found**: logs a warning but **still executes the shortcut** (so the action never fails silently).
+- Uses `SetForegroundWindow` with a `SetWindowPos` fallback for Windows compatibility.
 
 ---
 
