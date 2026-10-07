@@ -12,6 +12,10 @@ import customtkinter as ctk
 from tkinter import colorchooser, filedialog, messagebox
 import serial.tools.list_ports
 import glob
+import win32gui
+import win32process
+import win32con
+import psutil
 
 # ============================================================
 # DETECCIÓN DE ENTORNO (funciona en .py y en .exe)
@@ -106,7 +110,7 @@ class ButtonConfigFrame(ctk.CTkFrame):
         action_row.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(action_row, text="Acción:", width=45).grid(row=0, column=0, sticky="w")
-        self.entry_action = ctk.CTkEntry(action_row, placeholder_text="ctrl+shift+m / open:app.exe")
+        self.entry_action = ctk.CTkEntry(action_row, placeholder_text="ctrl+shift+m / open:app.exe / active:teams.exe;300;ctrl+h")
         self.entry_action.grid(row=0, column=1, sticky="ew")
         self.entry_action.insert(0, button_data.get("action", ""))
 
@@ -624,6 +628,11 @@ class CYDStreamDeckApp(ctk.CTk):
                 self.switch_profile_from_cyd(profile_name)
                 return
             
+            # NUEVO: Comando active: para activar ventana + shortcut
+            if action_str.startswith("active:"):
+                self._execute_active_action(action_str)
+                return
+            
             if action_str.startswith("open:"):
                 app = action_str.replace("open:", "").strip()
                 # Normalizar separadores (admite / o \)
@@ -676,6 +685,73 @@ class CYDStreamDeckApp(ctk.CTk):
             self.send_config_to_cyd()
         
         log(f"✓ Perfil cambiado a: {profile_name}")
+
+    # ========================================================
+    # ACTIVE: Activar ventana por proceso + shortcut
+    # ========================================================
+    def _find_window_by_process(self, process_name):
+        """Busca HWND de la ventana principal visible del proceso dado"""
+        def enum_windows_callback(hwnd, results):
+            if win32gui.IsWindowVisible(hwnd):
+                _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                try:
+                    proc = psutil.Process(pid)
+                    if proc.name().lower() == process_name:
+                        results.append(hwnd)
+                except:
+                    pass
+            return True
+        
+        results = []
+        win32gui.EnumWindows(enum_windows_callback, results)
+        return results[0] if results else None
+
+    def _execute_active_action(self, action_str):
+        """Ejecuta: active:process.exe;wait_ms;shortcut
+        Si no encuentra la ventana: logea warning PERO ejecuta el shortcut igualmente"""
+        try:
+            parts = action_str[len("active:"):].split(';')
+            if len(parts) != 3:
+                log(f"[ERROR] Formato active inválido: {action_str}")
+                return
+            
+            process_name = parts[0].strip().lower()
+            wait_ms = int(parts[1].strip())
+            shortcut = parts[2].strip()
+            
+            # Buscar ventana por nombre de proceso
+            hwnd = self._find_window_by_process(process_name)
+            if hwnd:
+                # Restaurar si está minimizada
+                if win32gui.IsIconic(hwnd):
+                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                
+                # Traer al frente con SetForegroundWindow
+                try:
+                    win32gui.SetForegroundWindow(hwnd)
+                    log(f"[OK] Ventana activada (SetForegroundWindow): {process_name}")
+                except Exception as e:
+                    # Fallback: SetWindowPos TOPMOST -> NOTOPMOST
+                    try:
+                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+                        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                                            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+                        log(f"[OK] Ventana activada (SetWindowPos fallback): {process_name}")
+                    except Exception as e2:
+                        log(f"[WARN] No se pudo activar ventana {process_name}: {e2}")
+                
+                time.sleep(wait_ms / 1000.0)
+            else:
+                log(f"[WARN] Ventana no encontrada: {process_name} (ejecutando shortcut igualmente)")
+            
+            # SIEMPRE ejecutar el shortcut
+            keys = [k.strip() for k in shortcut.split('+')]
+            pyautogui.hotkey(*keys)
+            log(f"[OK] Shortcut ejecutado: {shortcut}")
+            
+        except Exception as e:
+            log(f"[ERROR] active: {action_str}: {e}")
 
     # ========================================================
     # GUARDAR / ENVIAR
